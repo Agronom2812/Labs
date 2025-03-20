@@ -16,7 +16,10 @@ def main():
     condition = condition_operators(code)
 
     CL = condition
-    cl = float(CL / all_operators)
+    if all_operators == 0:
+        cl = -1
+    else :
+        cl = float(CL / all_operators)
     CLI = max_depth
 
     display_table(CL, cl, CLI)
@@ -26,3 +29,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
