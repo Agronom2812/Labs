@@ -8,7 +8,7 @@ def condition_operators(code):
     count = 0
 
     operator_values = {
-        "if", "else", "for", "foreach", "while", "do", "switch", "case"
+        "if", "else", "for", "foreach", "while", "do", "case"
     }
 
 
@@ -39,3 +39,4 @@ def condition_operators(code):
             count += 1
 
     return count
+
