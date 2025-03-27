@@ -2,11 +2,30 @@
 
 namespace ConsolePaint.Shapes;
 
+/// <summary>
+/// Represents a rectangle shape with specified width and height.
+/// </summary>
 public class Rectangle : Shape
 {
+    /// <summary>
+    /// Gets or sets the width of the rectangle.
+    /// </summary>
     private float Width { get; set; }
+
+    /// <summary>
+    /// Gets or sets the height of the rectangle.
+    /// </summary>
     private float Height { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Rectangle"/> class.
+    /// </summary>
+    /// <param name="center">The center point of the rectangle.</param>
+    /// <param name="width">The width of the rectangle (must be positive).</param>
+    /// <param name="height">The height of the rectangle (must be positive).</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when width or height are non-positive.
+    /// </exception>
     public Rectangle(SKPoint center, float width, float height) : base(center)
     {
         if (width <= 0 || height <= 0)
@@ -16,6 +35,10 @@ public class Rectangle : Shape
         Height = height;
     }
 
+    /// <summary>
+    /// Draws the rectangle on the specified canvas.
+    /// </summary>
+    /// <param name="canvas">The SkiaSharp canvas to draw on.</param>
     public override void Draw(SKCanvas canvas)
     {
         var rect = new SKRect(
@@ -38,6 +61,14 @@ public class Rectangle : Shape
         }
     }
 
+    /// <summary>
+    /// Checks if a point is contained within the rectangle.
+    /// </summary>
+    /// <param name="point">The point to check.</param>
+    /// <returns>
+    /// <c>true</c> if the point is inside the rectangle.
+    /// <c>false</c> if the point is not inside the triangle.
+    /// </returns>
     public override bool Contains(SKPoint point)
     {
         float halfWidth = Width / 2;
