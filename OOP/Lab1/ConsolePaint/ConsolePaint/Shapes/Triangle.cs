@@ -102,7 +102,7 @@ public class Triangle : Shape
         /// <param name="point">The point to check.</param>
         /// <returns>
         /// <c>true</c> if the point is inside the triangle.
-        /// <c>false</c> if the point is not inside the triangle..
+        /// <c>false</c> if the point is not inside the triangle.
         /// </returns>
         public override bool Contains(SKPoint point)
         {
