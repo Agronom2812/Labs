@@ -1,3 +1,16 @@
+# Rider files and directories
+.idea/
+*.sln.iml
+*.sln.DotSettings
+
+# dotnet 8.0
+/bin/
+/obj/
+*.dll
+*.exe
+*.pdb
+*.cache
+
 [Bb]in/
 [Oo]bj/
 
