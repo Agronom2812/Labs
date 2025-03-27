@@ -5,7 +5,7 @@ namespace ConsolePaint.Shapes;
 /// <summary>
 /// Represents a rectangle shape with specified width and height.
 /// </summary>
-public class Rectangle : Shape
+public sealed class Rectangle : Shape
 {
     /// <summary>
     /// Gets or sets the width of the rectangle.
@@ -26,7 +26,7 @@ public class Rectangle : Shape
     /// <exception cref="ArgumentException">
     /// Thrown when width or height are non-positive.
     /// </exception>
-    public Rectangle(SKPoint center, float width, float height) : base(center)
+    public Rectangle(SKPoint center, float width, float height) : base()
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentException("Width and height must be positive numbers");

@@ -13,7 +13,7 @@ namespace ConsolePaint.Commands;
 /// Implements <see cref="ICommand"/> for undo/redo functionality.
 /// </remarks>
 public class MoveCommand(IShape shape, float dx, float dy) : ICommand {
-    private bool _isExecuted = false;
+    private bool _isExecuted;
 
     /// <summary>
     /// Executes the move command.

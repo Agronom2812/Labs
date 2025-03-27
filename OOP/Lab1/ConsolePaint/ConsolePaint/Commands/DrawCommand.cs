@@ -1,5 +1,4 @@
 ﻿using ConsolePaint.Shapes;
-using System.Collections.Generic;
 
 namespace ConsolePaint.Commands;
 

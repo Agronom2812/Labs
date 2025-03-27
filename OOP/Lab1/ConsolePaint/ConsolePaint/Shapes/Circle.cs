@@ -5,7 +5,7 @@ namespace ConsolePaint.Shapes
     /// <summary>
     /// Represents a circle shape with specified radius.
     /// </summary>
-    public class Circle : Shape
+    public sealed class Circle : Shape
     {
         /// <summary>
         /// Gets or sets the radius of the circle.
@@ -20,7 +20,7 @@ namespace ConsolePaint.Shapes
         /// <exception cref="ArgumentException">
         /// Thrown when radius is non-positive.
         /// </exception>
-        public Circle(SKPoint center, float radius) : base(center)
+        public Circle(SKPoint center, float radius) : base()
         {
             if (radius <= 0)
                 throw new ArgumentException("Radius must be a positive number");

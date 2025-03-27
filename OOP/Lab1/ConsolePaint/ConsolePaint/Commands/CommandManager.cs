@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace ConsolePaint.Commands;
+﻿namespace ConsolePaint.Commands;
 
 /// <summary>
 /// Manages command execution history for undo/redo operations.

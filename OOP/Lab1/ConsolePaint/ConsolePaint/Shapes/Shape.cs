@@ -2,7 +2,7 @@
 
 namespace ConsolePaint.Shapes;
 
-public abstract class Shape(SKPoint center) : IShape
+public abstract class Shape() : IShape
 {
     public SKPoint Center { get; set; }
     public SKColor Background { get; set; } = SKColors.White;

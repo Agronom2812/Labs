@@ -1,5 +1,4 @@
-﻿using System;
-using SkiaSharp;
+﻿using SkiaSharp;
 
 namespace ConsolePaint.Shapes;
 
@@ -10,7 +9,7 @@ namespace ConsolePaint.Shapes;
 /// The triangle is constructed using the specified side lengths and automatically calculates vertex positions while
 /// maintaining the given center point.
 /// </remarks>
-public class Triangle : Shape
+public sealed class Triangle : Shape
     {
         /// <summary>
         /// Gets the vertices of the triangle in screen coordinates.
@@ -44,11 +43,10 @@ public class Triangle : Shape
         /// Thrown when sides are non-positive or don't satisfy triangle inequality.
         /// </exception>
         public Triangle(SKPoint center, float firstSide, float secondSide, float thirdSide, SKPoint[] vertices)
-            : base(center)
         {
             if (firstSide <= 0 || secondSide <= 0 || thirdSide <= 0)
                 throw new ArgumentException("All sides must be positive numbers");
-            
+
             FirstSide = firstSide;
             SecondSide = secondSide;
             ThirdSide = thirdSide;
@@ -108,7 +106,7 @@ public class Triangle : Shape
         /// <param name="point">The point to check.</param>
         /// <returns>
         /// <c>true</c> if the point is inside the triangle.
-        /// <c>false</c> if the point is not inside the triangle..
+        /// <c>false</c> if the point is not inside the triangle.
         /// </returns>
         public override bool Contains(SKPoint point)
         {
