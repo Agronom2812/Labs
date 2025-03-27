@@ -3,13 +3,45 @@ using SkiaSharp;
 
 namespace ConsolePaint.Shapes;
 
+/// <summary>
+/// Represents a triangle shape.
+/// </summary>
+/// <remarks>
+/// The triangle is constructed using the specified side lengths and automatically calculates vertex positions while
+/// maintaining the given center point.
+/// </remarks>
 public class Triangle : Shape
     {
+        /// <summary>
+        /// Gets the vertices of the triangle in screen coordinates.
+        /// </summary>
         private SKPoint[] Vertices { get; set; }
+
+        /// <summary>
+        /// Gets the length of side A of the triangle.
+        /// </summary>
         private float SideA { get; }
+
+        /// <summary>
+        /// Gets the length of side B of the triangle.
+        /// </summary>
         private float SideB { get; }
+
+        /// <summary>
+        /// Gets the length of side C of the triangle.
+        /// </summary>
         private float SideC { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Triangle"/> class.
+        /// </summary>
+        /// <param name="center">The center point of the triangle.</param>
+        /// <param name="sideA">Length of side A (must be positive).</param>
+        /// <param name="sideB">Length of side B (must be positive).</param>
+        /// <param name="sideC">Length of side C (must be positive).</param>
+        /// <exception cref="ArgumentException">
+        /// Thrown when sides are non-positive or don't satisfy triangle inequality.
+        /// </exception>
         public Triangle(SKPoint center, float sideA, float sideB, float sideC)
             : base(center)
         {
@@ -22,27 +54,40 @@ public class Triangle : Shape
             CalculateVertices(sideA, sideB, sideC);
         }
 
-        private static bool IsValidTriangle(float a, float b, float c)
+        /// <summary>
+        /// Checks whether a triangle with the given sides can exist.
+        /// </summary>
+        /// <param name="firstSide">Length of the first side of the triangle.</param>
+        /// <param name="secondSide">Length of the second side of the triangle.</param>
+        /// <param name="thirdSide">Length of the third side of the triangle.</param>
+        /// <returns>
+        /// <c>true</c> if triangle can exist.
+        /// <c>false</c> if triangle can not exist.
+        /// </returns>
+        private static bool IsValidTriangle(float firstSide, float secondSide, float thirdSide)
         {
-            return a + b > c && a + c > b && b + c > a;
+            return firstSide + secondSide > thirdSide && firstSide + thirdSide > secondSide
+                                                      && secondSide + thirdSide > firstSide;
         }
 
+        /// <summary>
+        /// Draws the triangle on the specified canvas.
+        /// </summary>
+        /// <param name="canvas">The <c>SkiaSharp</c> canvas to draw on.</param>
         public override void Draw(SKCanvas canvas) {
-            // Создаем путь для треугольника
+
             using var path = new SKPath();
             path.MoveTo(Vertices[0]);
             path.LineTo(Vertices[1]);
             path.LineTo(Vertices[2]);
             path.Close();
 
-            // Заливка
             using (var fillPaint = new SKPaint()) {
                 fillPaint.Color = Background;
                 fillPaint.Style = SKPaintStyle.Fill;
                 canvas.DrawPath(path, fillPaint);
             }
 
-            // Обводка
             using (var borderPaint = new SKPaint()) {
                 borderPaint.Color = BorderColor;
                 borderPaint.Style = SKPaintStyle.Stroke;
@@ -51,9 +96,16 @@ public class Triangle : Shape
             }
         }
 
+        /// <summary>
+        /// Checks if a point is contained within the triangle.
+        /// </summary>
+        /// <param name="point">The point to check.</param>
+        /// <returns>
+        /// <c>true</c> if the point is inside the triangle.
+        /// <c>false</c> if the point is not inside the triangle..
+        /// </returns>
         public override bool Contains(SKPoint point)
         {
-            // Алгоритм барицентрических координат
             var p1 = Vertices[0];
             var p2 = Vertices[1];
             var p3 = Vertices[2];
@@ -68,20 +120,33 @@ public class Triangle : Shape
             return !(hasNeg && hasPos);
         }
 
-        private void CalculateVertices(float a, float b, float c)
+        /// <summary>
+        /// Calculates the vertices of the triangle based on side lengths and current center position.
+        /// </summary>
+        /// <param name="firstSide">Length of the first side of the triangle.</param>
+        /// <param name="secondSide">Length of the second side of the triangle.</param>
+        /// <param name="thirdSide">Length of the third side of the triangle.</param>
+        /// <remarks>
+        /// The method:
+        /// <list type="bullet">
+        /// <item>Starts with vertex A at (0,0) and vertex B at (sideA,0)</item>
+        /// <item>Calculates vertex C using the law of cosines</item>
+        /// <item>Centers the triangle around (0,0) and then translates it to the specified center</item>
+        /// </list>
+        /// </remarks>
+        private void CalculateVertices(float firstSide, float secondSide, float thirdSide)
         {
-            // Расчет вершин (аналогично вашему исходному коду)
             const float x1 = 0, y1 = 0;
             const float y2 = 0;
-            float x2 = a;
+            float x2 = firstSide;
 
-            double angle = Math.Acos((a * a + b * b - c * c) / (2 * a * b));
-            float x3 = (float)(b * Math.Cos(angle));
-            float y3 = (float)(b * Math.Sin(angle));
+            double angle = Math.Acos((firstSide * firstSide + secondSide * secondSide - thirdSide * thirdSide)
+                                     / (2 * firstSide * secondSide));
+            float x3 = (float)(secondSide * Math.Cos(angle));
+            float y3 = (float)(secondSide * Math.Sin(angle));
 
-            // Центрирование
-            float centerX = (x1 + x2 + x3) / 3;
-            float centerY = (y1 + y2 + y3) / 3;
+            float centerX = (float)((x1 + x2 + x3) / 3.0);
+            float centerY = (float)((y1 + y2 + y3) / 3.0);
 
             Vertices = [
                 new SKPoint(x1 - centerX + Center.X, y1 - centerY + Center.Y),
@@ -90,6 +155,19 @@ public class Triangle : Shape
             ];
         }
 
+        /// <summary>
+        /// Moves the triangle by specified offsets in both X and Y directions.
+        /// </summary>
+        /// <param name="dx">Horizontal offset (positive = right, negative = left).</param>
+        /// <param name="dy">Vertical offset (positive = down, negative = up).</param>
+        /// <remarks>
+        /// This method:
+        /// <list type="bullet">
+        /// <item>Updates the <see cref="Shape.Center"/> position by adding the offsets</item>
+        /// <item>Recalculates all vertices to maintain triangle geometry</item>
+        /// <item>Preserves the exact side lengths during movement</item>
+        /// </list>
+        /// </remarks>
         public override void Move(float dx, float dy)
         {
             base.Move(dx, dy);
