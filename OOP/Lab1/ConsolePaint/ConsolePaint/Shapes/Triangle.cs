@@ -18,40 +18,40 @@ public class Triangle : Shape
         private SKPoint[] Vertices { get; set; }
 
         /// <summary>
-        /// Gets the length of side A of the triangle.
+        /// Gets the length of the first side of the triangle.
         /// </summary>
-        private float SideA { get; }
+        private float firstSide { get; }
 
         /// <summary>
-        /// Gets the length of side B of the triangle.
+        /// Gets the length of the second side of the triangle.
         /// </summary>
-        private float SideB { get; }
+        private float secondSide { get; }
 
         /// <summary>
-        /// Gets the length of side C of the triangle.
+        /// Gets the length of the third side of the triangle.
         /// </summary>
-        private float SideC { get; }
+        private float thirdSide { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Triangle"/> class.
         /// </summary>
         /// <param name="center">The center point of the triangle.</param>
-        /// <param name="sideA">Length of side A (must be positive).</param>
-        /// <param name="sideB">Length of side B (must be positive).</param>
-        /// <param name="sideC">Length of side C (must be positive).</param>
+        /// <param name="firstSide">Length of the first side of the triangle (must be positive).</param>
+        /// <param name="secondSide">Length of the second side of the triangle (must be positive).</param>
+        /// <param name="thirdSide">Length of the third side of the triangle (must be positive).</param>
         /// <exception cref="ArgumentException">
         /// Thrown when sides are non-positive or don't satisfy triangle inequality.
         /// </exception>
-        public Triangle(SKPoint center, float sideA, float sideB, float sideC)
+        public Triangle(SKPoint center, float firstSide, float secondSide, float thirdSide)
             : base(center)
         {
-            if (sideA <= 0 || sideB <= 0 || sideC <= 0)
+            if (firstSide <= 0 || secondSide <= 0 || thirdSide <= 0)
                 throw new ArgumentException("All sides must be positive numbers");
 
-            if (!IsValidTriangle(sideA, sideB, sideC))
+            if (!IsValidTriangle(firstSide, secondSide, thirdSide))
                 throw new ArgumentException("Invalid triangle sides");
 
-            CalculateVertices(sideA, sideB, sideC);
+            CalculateVertices(firstSide, secondSide, thirdSide);
         }
 
         /// <summary>
