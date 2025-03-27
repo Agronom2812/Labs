@@ -14,7 +14,7 @@ public sealed class Triangle : Shape
         /// <summary>
         /// Gets the vertices of the triangle in screen coordinates.
         /// </summary>
-        private SKPoint[] Vertices { get; set; }
+        private SKPoint[]? Vertices { get; set; }
 
         /// <summary>
         /// Gets the length of the first side of the triangle.
@@ -42,7 +42,7 @@ public sealed class Triangle : Shape
         /// <exception cref="ArgumentException">
         /// Thrown when sides are non-positive or don't satisfy triangle inequality.
         /// </exception>
-        public Triangle(SKPoint center, float firstSide, float secondSide, float thirdSide, SKPoint[] vertices)
+        public Triangle(SKPoint center, float firstSide, float secondSide, float thirdSide, SKPoint[]? vertices)
         {
             if (firstSide <= 0 || secondSide <= 0 || thirdSide <= 0)
                 throw new ArgumentException("All sides must be positive numbers");

@@ -30,7 +30,7 @@ public static class FileIO
                 throw new IOException("Failed to save file due to filesystem error", ex);
             }
         }
-        
+
         public static List<IShape> LoadFromFile(string path)
         {
             if (string.IsNullOrWhiteSpace(path))

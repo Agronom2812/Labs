@@ -10,7 +10,7 @@ namespace ConsolePaint.Shapes
         /// <summary>
         /// Gets or sets the radius of the circle.
         /// </summary>
-        private float Radius { get; set; }
+        public float Radius { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Circle"/> class.

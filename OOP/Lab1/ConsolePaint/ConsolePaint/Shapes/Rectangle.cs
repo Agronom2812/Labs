@@ -10,12 +10,12 @@ public sealed class Rectangle : Shape
     /// <summary>
     /// Gets or sets the width of the rectangle.
     /// </summary>
-    private float Width { get; set; }
+    public float Width { get; set; }
 
     /// <summary>
     /// Gets or sets the height of the rectangle.
     /// </summary>
-    private float Height { get; set; }
+    public float Height { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Rectangle"/> class.
