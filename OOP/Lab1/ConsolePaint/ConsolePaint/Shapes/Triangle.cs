@@ -20,17 +20,17 @@ public class Triangle : Shape
         /// <summary>
         /// Gets the length of the first side of the triangle.
         /// </summary>
-        private float firstSide { get; }
+        private float FirstSide { get; }
 
         /// <summary>
         /// Gets the length of the second side of the triangle.
         /// </summary>
-        private float secondSide { get; }
+        private float SecondSide { get; }
 
         /// <summary>
         /// Gets the length of the third side of the triangle.
         /// </summary>
-        private float thirdSide { get; }
+        private float ThirdSide { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Triangle"/> class.
@@ -39,14 +39,20 @@ public class Triangle : Shape
         /// <param name="firstSide">Length of the first side of the triangle (must be positive).</param>
         /// <param name="secondSide">Length of the second side of the triangle (must be positive).</param>
         /// <param name="thirdSide">Length of the third side of the triangle (must be positive).</param>
+        /// <param name="vertices">The vertices of the triangle</param>
         /// <exception cref="ArgumentException">
         /// Thrown when sides are non-positive or don't satisfy triangle inequality.
         /// </exception>
-        public Triangle(SKPoint center, float firstSide, float secondSide, float thirdSide)
+        public Triangle(SKPoint center, float firstSide, float secondSide, float thirdSide, SKPoint[] vertices)
             : base(center)
         {
             if (firstSide <= 0 || secondSide <= 0 || thirdSide <= 0)
                 throw new ArgumentException("All sides must be positive numbers");
+            
+            FirstSide = firstSide;
+            SecondSide = secondSide;
+            ThirdSide = thirdSide;
+            Vertices = vertices;
 
             if (!IsValidTriangle(firstSide, secondSide, thirdSide))
                 throw new ArgumentException("Invalid triangle sides");
@@ -102,7 +108,7 @@ public class Triangle : Shape
         /// <param name="point">The point to check.</param>
         /// <returns>
         /// <c>true</c> if the point is inside the triangle.
-        /// <c>false</c> if the point is not inside the triangle.
+        /// <c>false</c> if the point is not inside the triangle..
         /// </returns>
         public override bool Contains(SKPoint point)
         {
