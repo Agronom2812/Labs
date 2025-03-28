@@ -6,7 +6,7 @@ namespace ConsolePaint.Tests.ShapeTests;
 
 public sealed class LineTests
 {
-    public static IEnumerable<object[]> LineTestData =>
+    public static System.Collections.Generic.IEnumerable<object[]> LineTestData =>
         new List<object[]>
         {
             new object[] { new SKPoint(10, 10), new SKPoint(20, 20) },

@@ -13,8 +13,8 @@
 /// </remarks>
 public sealed class CommandManager
 {
-    private readonly Stack<ICommand> _undoStack = new Stack<ICommand>();
-    private readonly Stack<ICommand> _redoStack = new Stack<ICommand>();
+    private readonly Stack<ICommand> _undoStack = new();
+    private readonly Stack<ICommand> _redoStack = new();
 
     /// <summary>
     /// Executes a command and adds it to the history.
@@ -25,6 +25,7 @@ public sealed class CommandManager
         command.Execute();
         _undoStack.Push(command);
         _redoStack.Clear();
+        Console.WriteLine($"Command executed. Undo stack: {_undoStack.Count}, Redo stack: {_redoStack.Count}");
     }
 
     /// <summary>

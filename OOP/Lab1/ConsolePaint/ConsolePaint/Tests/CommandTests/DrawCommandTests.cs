@@ -7,7 +7,7 @@ namespace ConsolePaint.Tests.CommandTests;
 
 public sealed class DrawCommandTests
 {
-    public static IEnumerable<object[]> ShapeTestData =>
+    public static System.Collections.Generic.IEnumerable<object[]> ShapeTestData =>
         new List<object[]>
         {
             new object[] { new Circle(new SKPoint(10, 10), 5) },

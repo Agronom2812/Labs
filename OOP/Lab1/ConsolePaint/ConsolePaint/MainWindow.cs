@@ -24,8 +24,8 @@ namespace ConsolePaint
         private IShape? _selectedShape;
         private SKPoint _selectionOffset;
         private bool _isDragging;
-        private Button _undoButton;
-        private Button _redoButton;
+        private readonly Button _undoButton;
+        private readonly Button _redoButton;
 
         public MainWindow() : base("Console Paint")
         {
@@ -37,6 +37,22 @@ namespace ConsolePaint
                 Margin = 5,
                 Halign = Align.Start
             };
+
+            _undoButton = new Button ("Undo")
+            {
+                Visible = true,
+                Margin = 2,
+                Sensitive = false
+            };
+            _undoButton.Clicked += OnUndoClicked;
+
+            _redoButton = new Button("Redo")
+            {
+                Visible = true,
+                Margin = 2,
+                Sensitive = false
+            };
+            _redoButton.Clicked += OnRedoClicked;
 
             toolbar.PackEnd(_undoButton, false, false, 0);
             toolbar.PackEnd(_redoButton, false, false, 0);
@@ -54,22 +70,6 @@ namespace ConsolePaint
             var loadButton = new Button { Label = "Load", Margin = 2 };
             loadButton.Clicked += OnLoadClicked;
             toolbar.PackEnd(loadButton, false, false, 0);
-
-            _undoButton = new Button
-            {
-                Label = "Undo",
-                Margin = 2,
-                Sensitive = false
-            };
-            _undoButton.Clicked += OnUndoClicked;
-
-            _redoButton = new Button
-            {
-                Label = "Redo",
-                Margin = 2,
-                Sensitive = false
-            };
-            _redoButton.Clicked += OnRedoClicked;
 
             _canvas = new DrawingArea();
             _canvas.Drawn += OnCanvasDrawn;
@@ -116,6 +116,8 @@ namespace ConsolePaint
         {
             _undoButton.Sensitive = _cmdManager.CanUndo();
             _redoButton.Sensitive = _cmdManager.CanRedo();
+
+            Console.WriteLine($"Undo available: {_cmdManager.CanUndo()}, Redo available: {_cmdManager.CanRedo()}");
         }
 
 
@@ -211,7 +213,7 @@ namespace ConsolePaint
             {
                 case DrawingTool.Line:
                     _currentShape = new Line(point, point);
-                    _shapes.Add(_currentShape);
+                    _cmdManager.Execute(new DrawCommand(_shapes, _currentShape));
                     break;
 
                 case DrawingTool.Rectangle:
@@ -366,6 +368,8 @@ namespace ConsolePaint
             _isDrawing = false;
             _selectedShape = null;
             _currentShape = null;
+
+            UpdateUndoRedoButtons();
         }
 
         private void ShowCircleDialog(SKPoint center)
@@ -387,6 +391,7 @@ namespace ConsolePaint
 
                         _cmdManager.Execute(new DrawCommand(_shapes, circle));
                         RedrawCanvas();
+                        UpdateUndoRedoButtons();
                     }
                 }
                 finally
@@ -417,6 +422,7 @@ namespace ConsolePaint
 
                         _cmdManager.Execute(new DrawCommand(_shapes, rect));
                         RedrawCanvas();
+                        UpdateUndoRedoButtons();
                     }
                 }
                 finally
@@ -452,6 +458,7 @@ namespace ConsolePaint
 
                     _cmdManager.Execute(new DrawCommand(_shapes, triangle));
                     RedrawCanvas();
+                    UpdateUndoRedoButtons();
                 }
                 catch (Exception ex)
                 {
@@ -475,6 +482,7 @@ namespace ConsolePaint
                 {
                     _cmdManager.Execute(new EraseCommand(_shapes, shape));
                     RedrawCanvas();
+                    UpdateUndoRedoButtons();
                 }
             }
             catch (Exception ex)
@@ -486,6 +494,7 @@ namespace ConsolePaint
         {
             _cmdManager.Execute(new ClearAllCommand(_shapes));
             RedrawCanvas();
+            UpdateUndoRedoButtons();
         }
 
         private void OnSaveClicked(object? sender, EventArgs args)
@@ -714,31 +723,50 @@ namespace ConsolePaint
 
         protected override bool OnKeyPressEvent(EventKey evnt)
         {
-            var ctrl = evnt.State.HasFlag(ModifierType.ControlMask);
-
-            if (ctrl)
+            try
             {
+                bool ctrlPressed = evnt.State.HasFlag(ModifierType.ControlMask);
+                bool shiftPressed = evnt.State.HasFlag(ModifierType.ShiftMask);
+
+                if (!ctrlPressed)
+                    return base.OnKeyPressEvent(evnt);
+
                 switch (evnt.Key)
                 {
-                    case Gdk.Key.z:
+                    case Gdk.Key.z when !shiftPressed:
                         if (_cmdManager.CanUndo())
-                            OnUndoClicked(null, EventArgs.Empty);
-                        return true;
+                        {
+                            OnUndoClicked(this, EventArgs.Empty);
+                            return true;
+                        }
+                        break;
 
+                    case Gdk.Key.z when shiftPressed:
                     case Gdk.Key.y:
-                    case Gdk.Key.Z when evnt.State.HasFlag(ModifierType.ShiftMask):
                         if (_cmdManager.CanRedo())
-                            OnRedoClicked(null, EventArgs.Empty);
-                        return true;
+                        {
+                            OnRedoClicked(this, EventArgs.Empty);
+                            return true;
+                        }
+                        break;
 
                     case Gdk.Key.s:
-                        OnSaveClicked(null, EventArgs.Empty);
+                        OnSaveClicked(this, EventArgs.Empty);
                         return true;
 
                     case Gdk.Key.o:
-                        OnLoadClicked(null, EventArgs.Empty);
+                        OnLoadClicked(this, EventArgs.Empty);
+                        return true;
+
+                    case Gdk.Key.q:
+                        Application.Quit();
                         return true;
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Key press error: {ex.Message}");
+                ShowErrorDialog($"Keyboard shortcut error: {ex.Message}");
             }
 
             return base.OnKeyPressEvent(evnt);
@@ -763,6 +791,7 @@ namespace ConsolePaint
                 {
                     currentFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
                 }
+
 
                 string fullPath = System.IO.Path.Combine(currentFolder, defaultName);
                 if (File.Exists(fullPath))

@@ -13,19 +13,6 @@ namespace ConsolePaint.Commands;
 /// </remarks>
 public sealed class DrawCommand(IList<IShape> shapes, IShape shape) : ICommand {
 
-    /// <summary>
-    /// Executes the draw command by adding the shape.
-    /// </summary>
-    public void Execute()
-    {
-        shapes.Add(shape);
-    }
-
-    /// <summary>
-    /// Reverts the draw command by removing the shape.
-    /// </summary>
-    public void Undo()
-    {
-        shapes.Remove(shape);
-    }
+    public void Execute() => shapes.Add(shape);
+    public void Undo() => shapes.Remove(shape);
 }
