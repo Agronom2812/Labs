@@ -9,3 +9,6 @@ Main features of project:
 5) undo/redo options
 6) Loading and saving canvas to json file 
 ```
+
+
+Yury Zheludovich 353505
