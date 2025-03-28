@@ -13,6 +13,7 @@ Main features of project:
 ```
 
 ## Project Structure Groups
+
 ![изображение](https://github.com/user-attachments/assets/85c5080e-4c2c-437b-b493-574cd844cd92)
 
 ## Namespace Groups
