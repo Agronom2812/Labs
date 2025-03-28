@@ -1,13 +1,6 @@
-﻿using Application = Gtk.Application;
+﻿using ConsolePaint;
+using Application = Gtk.Application;
 
-namespace ConsolePaint;
-
-internal static class Program
-{
-    private static void Main(string[] args)
-    {
-        Application.Init();
-        new MainWindow().ShowAll();
-        Application.Run();
-    }
-}
+Application.Init();
+new MainWindow().ShowAll();
+Application.Run();

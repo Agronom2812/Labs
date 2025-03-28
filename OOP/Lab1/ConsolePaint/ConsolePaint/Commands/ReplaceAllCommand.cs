@@ -2,7 +2,7 @@
 
 namespace ConsolePaint.Commands
 {
-    public class ReplaceAllCommand : ICommand
+    public sealed class ReplaceAllCommand : ICommand
     {
         private readonly List<IShape> _target;
         private readonly List<IShape> _newShapes;

@@ -1,16 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsolePaint", "ConsolePaint\ConsolePaint.csproj", "{6973FDB4-3783-4B26-BF71-70F159C79BCA}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsolePaint", "ConsolePaint\ConsolePaint.csproj", "{A57FBA1D-67BA-4B6D-87B3-37B7CCA5AE05}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{6973FDB4-3783-4B26-BF71-70F159C79BCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6973FDB4-3783-4B26-BF71-70F159C79BCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6973FDB4-3783-4B26-BF71-70F159C79BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6973FDB4-3783-4B26-BF71-70F159C79BCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A57FBA1D-67BA-4B6D-87B3-37B7CCA5AE05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A57FBA1D-67BA-4B6D-87B3-37B7CCA5AE05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A57FBA1D-67BA-4B6D-87B3-37B7CCA5AE05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A57FBA1D-67BA-4B6D-87B3-37B7CCA5AE05}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

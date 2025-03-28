@@ -24,6 +24,8 @@ namespace ConsolePaint
         private IShape? _selectedShape;
         private SKPoint _selectionOffset;
         private bool _isDragging;
+        private Button _undoButton;
+        private Button _redoButton;
 
         public MainWindow() : base("Console Paint")
         {
@@ -36,6 +38,8 @@ namespace ConsolePaint
                 Halign = Align.Start
             };
 
+            toolbar.PackEnd(_undoButton, false, false, 0);
+            toolbar.PackEnd(_redoButton, false, false, 0);
             AddToolButton(toolbar, DrawingTool.Selector, "Select");
             AddToolButton(toolbar, DrawingTool.Line, "Line");
             AddToolButton(toolbar, DrawingTool.Triangle, "Triangle");
@@ -50,6 +54,22 @@ namespace ConsolePaint
             var loadButton = new Button { Label = "Load", Margin = 2 };
             loadButton.Clicked += OnLoadClicked;
             toolbar.PackEnd(loadButton, false, false, 0);
+
+            _undoButton = new Button
+            {
+                Label = "Undo",
+                Margin = 2,
+                Sensitive = false
+            };
+            _undoButton.Clicked += OnUndoClicked;
+
+            _redoButton = new Button
+            {
+                Label = "Redo",
+                Margin = 2,
+                Sensitive = false
+            };
+            _redoButton.Clicked += OnRedoClicked;
 
             _canvas = new DrawingArea();
             _canvas.Drawn += OnCanvasDrawn;
@@ -78,6 +98,26 @@ namespace ConsolePaint
             vbox.PackEnd(_canvas, true, true, 0);
             Add(vbox);
         }
+
+        private void OnUndoClicked(object? sender, EventArgs e)
+        {
+            _cmdManager.Undo();
+            RedrawCanvas();
+            UpdateUndoRedoButtons();
+        }
+
+        private void OnRedoClicked(object? sender, EventArgs e)
+        {
+            _cmdManager.Redo();
+            RedrawCanvas();
+            UpdateUndoRedoButtons();
+        }
+        private void UpdateUndoRedoButtons()
+        {
+            _undoButton.Sensitive = _cmdManager.CanUndo();
+            _redoButton.Sensitive = _cmdManager.CanRedo();
+        }
+
 
         private void AddToolButton(Box container, DrawingTool tool, string label)
         {
@@ -458,13 +498,11 @@ namespace ConsolePaint
                 "Save", ResponseType.Accept);
             dialog.DoOverwriteConfirmation = true;
 
-            // Настройка фильтров файлов
             using var filter = new FileFilter();
             filter.AddPattern("*.json");
             filter.Name = "JSON Files";
             dialog.AddFilter(filter);
 
-            // Установка начальной директории
             string initialDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             try
             {
@@ -478,7 +516,6 @@ namespace ConsolePaint
                 Console.Error.WriteLine($"Error setting initial directory: {ex.Message}");
             }
 
-            // Установка имени файла по умолчанию
             SetCurrentName(dialog, $"canvas_{DateTime.Now:yyyyMMdd_HHmmss}");
 
             if (dialog.Run() == (int)ResponseType.Accept)
@@ -487,7 +524,6 @@ namespace ConsolePaint
                 {
                     string filename = dialog.Filename;
 
-                    // Двойная проверка расширения
                     if (!filename.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                     {
                         filename += ".json";
@@ -522,7 +558,6 @@ namespace ConsolePaint
 
                 try
                 {
-                    // Настройка фильтра
                     using var filter = new FileFilter();
                     filter.AddPattern("*.json");
                     filter.Name = "JSON Files";
@@ -534,7 +569,6 @@ namespace ConsolePaint
                         {
                             try
                             {
-                                // Получаем имя файла из самого диалога
                                 string filename = dialog.Filename;
                                 if (!string.IsNullOrEmpty(filename))
                                 {
@@ -547,7 +581,6 @@ namespace ConsolePaint
                             }
                         }
 
-                        // Важно: уничтожаем диалог после использования
                         dialog.Destroy();
                     };
 
@@ -572,7 +605,6 @@ namespace ConsolePaint
 
             try
             {
-                // Простейший фильтр файлов
                 var filter = new FileFilter();
                 filter.AddPattern("*.json");
                 dialog.AddFilter(filter);
@@ -605,7 +637,6 @@ namespace ConsolePaint
         {
             try
             {
-                // Чтение файла в фоновом потоке
                 Task.Run(() =>
                 {
                     try
@@ -683,45 +714,56 @@ namespace ConsolePaint
 
         protected override bool OnKeyPressEvent(EventKey evnt)
         {
-            if (evnt.State.HasFlag(ModifierType.ControlMask))
+            var ctrl = evnt.State.HasFlag(ModifierType.ControlMask);
+
+            if (ctrl)
             {
                 switch (evnt.Key)
                 {
+                    case Gdk.Key.z:
+                        if (_cmdManager.CanUndo())
+                            OnUndoClicked(null, EventArgs.Empty);
+                        return true;
+
+                    case Gdk.Key.y:
+                    case Gdk.Key.Z when evnt.State.HasFlag(ModifierType.ShiftMask):
+                        if (_cmdManager.CanRedo())
+                            OnRedoClicked(null, EventArgs.Empty);
+                        return true;
+
                     case Gdk.Key.s:
                         OnSaveClicked(null, EventArgs.Empty);
                         return true;
+
                     case Gdk.Key.o:
                         OnLoadClicked(null, EventArgs.Empty);
                         return true;
                 }
             }
+
             return base.OnKeyPressEvent(evnt);
         }
         private void SetCurrentName(FileChooserDialog dialog, string defaultName)
         {
             try
             {
-                // Убедимся, что имя файла не пустое
                 if (string.IsNullOrWhiteSpace(defaultName))
                 {
                     dialog.CurrentName = "canvas.json";
                     return;
                 }
 
-                // Добавим расширение .json, если его нет
                 if (!defaultName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                 {
                     defaultName += ".json";
                 }
 
-                // Получим текущую директорию (без использования Uri)
                 string currentFolder = dialog.CurrentFolder;
                 if (string.IsNullOrEmpty(currentFolder))
                 {
                     currentFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
                 }
 
-                // Генерация уникального имени файла
                 string fullPath = System.IO.Path.Combine(currentFolder, defaultName);
                 if (File.Exists(fullPath))
                 {

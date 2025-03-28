@@ -69,7 +69,7 @@ public sealed class Triangle : Shape
         /// <c>true</c> if triangle can exist.
         /// <c>false</c> if triangle can not exist.
         /// </returns>
-        private static bool IsValidTriangle(float firstSide, float secondSide, float thirdSide)
+        public static bool IsValidTriangle(float firstSide, float secondSide, float thirdSide)
         {
             return firstSide + secondSide > thirdSide && firstSide + thirdSide > secondSide
                                                       && secondSide + thirdSide > firstSide;
@@ -169,7 +169,7 @@ public sealed class Triangle : Shape
         /// <item>Centers the triangle around (0,0) and then translates it to the specified center</item>
         /// </list>
         /// </remarks>
-        private static SKPoint[] CalculateVertices(SKPoint center, float a, float b, float c)
+        public static SKPoint[] CalculateVertices(SKPoint center, float a, float b, float c)
         {
             var p1 = center;
 
