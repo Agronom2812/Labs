@@ -31,8 +31,14 @@ public sealed class Rectangle : Shape
         if (width <= 0 || height <= 0)
             throw new ArgumentException("Width and height must be positive numbers");
 
+        Center = center;
         Width = width;
         Height = height;
+
+        Background = new SKColor(255, 0, 0, 100);
+        BorderColor = SKColors.Black;
+        BorderWidth = 2;
+
     }
 
     /// <summary>
@@ -47,17 +53,39 @@ public sealed class Rectangle : Shape
             Center.X + Width / 2,
             Center.Y + Height / 2);
 
-        using (var fillPaint = new SKPaint()) {
+        using (var fillPaint = new SKPaint())
+        {
             fillPaint.Color = Background;
             fillPaint.Style = SKPaintStyle.Fill;
             canvas.DrawRect(rect, fillPaint);
         }
 
-        using (var borderPaint = new SKPaint()) {
+        using (var borderPaint = new SKPaint())
+        {
             borderPaint.Color = BorderColor;
             borderPaint.Style = SKPaintStyle.Stroke;
             borderPaint.StrokeWidth = BorderWidth;
             canvas.DrawRect(rect, borderPaint);
+        }
+
+        if (IsSelected)
+        {
+            using var selectionPaint = new SKPaint
+            {
+                Color = SKColors.Blue,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 2,
+                PathEffect = SKPathEffect.CreateDash(new float[] { 5, 5 }, 0),
+                IsAntialias = true
+            };
+
+            var selectionRect = new SKRect(
+                rect.Left - 5,
+                rect.Top - 5,
+                rect.Right + 5,
+                rect.Bottom + 5);
+
+            canvas.DrawRect(selectionRect, selectionPaint);
         }
     }
 

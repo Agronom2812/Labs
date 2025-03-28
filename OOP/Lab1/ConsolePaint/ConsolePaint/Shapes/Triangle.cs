@@ -14,22 +14,22 @@ public sealed class Triangle : Shape
         /// <summary>
         /// Gets the vertices of the triangle in screen coordinates.
         /// </summary>
-        private SKPoint[]? Vertices { get; set; }
+        public SKPoint[]? Vertices { get; set; }
 
         /// <summary>
         /// Gets the length of the first side of the triangle.
         /// </summary>
-        private float FirstSide { get; }
+        public float FirstSide { get; }
 
         /// <summary>
         /// Gets the length of the second side of the triangle.
         /// </summary>
-        private float SecondSide { get; }
+        public float SecondSide { get; }
 
         /// <summary>
         /// Gets the length of the third side of the triangle.
         /// </summary>
-        private float ThirdSide { get; }
+        public float ThirdSide { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Triangle"/> class.
@@ -47,15 +47,16 @@ public sealed class Triangle : Shape
             if (firstSide <= 0 || secondSide <= 0 || thirdSide <= 0)
                 throw new ArgumentException("All sides must be positive numbers");
 
+            if (!IsValidTriangle(firstSide, secondSide, thirdSide))
+                throw new ArgumentException("Invalid triangle sides");
+
             FirstSide = firstSide;
             SecondSide = secondSide;
             ThirdSide = thirdSide;
             Vertices = vertices;
 
-            if (!IsValidTriangle(firstSide, secondSide, thirdSide))
-                throw new ArgumentException("Invalid triangle sides");
+            Vertices = vertices ?? CalculateVertices(center, firstSide, secondSide, thirdSide);
 
-            CalculateVertices(firstSide, secondSide, thirdSide);
         }
 
         /// <summary>
@@ -78,7 +79,9 @@ public sealed class Triangle : Shape
         /// Draws the triangle on the specified canvas.
         /// </summary>
         /// <param name="canvas">The <c>SkiaSharp</c> canvas to draw on.</param>
-        public override void Draw(SKCanvas canvas) {
+        public override void Draw(SKCanvas canvas)
+        {
+            if (Vertices == null || Vertices.Length != 3) return;
 
             using var path = new SKPath();
             path.MoveTo(Vertices[0]);
@@ -86,17 +89,44 @@ public sealed class Triangle : Shape
             path.LineTo(Vertices[2]);
             path.Close();
 
-            using (var fillPaint = new SKPaint()) {
+            using (var fillPaint = new SKPaint())
+            {
                 fillPaint.Color = Background;
                 fillPaint.Style = SKPaintStyle.Fill;
                 canvas.DrawPath(path, fillPaint);
             }
 
-            using (var borderPaint = new SKPaint()) {
+            using (var borderPaint = new SKPaint())
+            {
                 borderPaint.Color = BorderColor;
                 borderPaint.Style = SKPaintStyle.Stroke;
                 borderPaint.StrokeWidth = BorderWidth;
                 canvas.DrawPath(path, borderPaint);
+            }
+
+            if (IsSelected)
+            {
+                using var selectionPaint = new SKPaint
+                {
+                    Color = SKColors.Blue,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 2,
+                    PathEffect = SKPathEffect.CreateDash(new float[] { 5, 5 }, 0),
+                    IsAntialias = true
+                };
+
+                float minX = Vertices.Min(v => v.X);
+                float minY = Vertices.Min(v => v.Y);
+                float maxX = Vertices.Max(v => v.X);
+                float maxY = Vertices.Max(v => v.Y);
+
+                var selectionRect = new SKRect(
+                    minX - 5,
+                    minY - 5,
+                    maxX + 5,
+                    maxY + 5);
+
+                canvas.DrawRect(selectionRect, selectionPaint);
             }
         }
 
@@ -127,9 +157,10 @@ public sealed class Triangle : Shape
         /// <summary>
         /// Calculates the vertices of the triangle based on side lengths and current center position.
         /// </summary>
-        /// <param name="firstSide">Length of the first side of the triangle.</param>
-        /// <param name="secondSide">Length of the second side of the triangle.</param>
-        /// <param name="thirdSide">Length of the third side of the triangle.</param>
+        /// <param name="a">Length of the first side of the triangle.</param>
+        /// <param name="b">Length of the second side of the triangle.</param>
+        /// <param name="c">Length of the third side of the triangle.</param>
+        /// <param name="center"></param>
         /// <remarks>
         /// The method:
         /// <list type="bullet">
@@ -138,25 +169,18 @@ public sealed class Triangle : Shape
         /// <item>Centers the triangle around (0,0) and then translates it to the specified center</item>
         /// </list>
         /// </remarks>
-        private void CalculateVertices(float firstSide, float secondSide, float thirdSide)
+        private static SKPoint[] CalculateVertices(SKPoint center, float a, float b, float c)
         {
-            const float x1 = 0, y1 = 0;
-            const float y2 = 0;
-            float x2 = firstSide;
+            var p1 = center;
 
-            double angle = Math.Acos((firstSide * firstSide + secondSide * secondSide - thirdSide * thirdSide)
-                                     / (2 * firstSide * secondSide));
-            float x3 = (float)(secondSide * Math.Cos(angle));
-            float y3 = (float)(secondSide * Math.Sin(angle));
+            var p2 = new SKPoint(center.X + a, center.Y);
 
-            float centerX = (float)((x1 + x2 + x3) / 3.0);
-            float centerY = (float)((y1 + y2 + y3) / 3.0);
+            float angle = (float)Math.Acos((a*a + b*b - c*c) / (2*a*b));
+            float px = center.X + b * (float)Math.Cos(angle);
+            float py = center.Y + b * (float)Math.Sin(angle);
+            var p3 = new SKPoint(px, py);
 
-            Vertices = [
-                new SKPoint(x1 - centerX + Center.X, y1 - centerY + Center.Y),
-                new SKPoint(x2 - centerX + Center.X, y2 - centerY + Center.Y),
-                new SKPoint(x3 - centerX + Center.X, y3 - centerY + Center.Y)
-            ];
+            return [p1, p2, p3];
         }
 
         /// <summary>
@@ -172,11 +196,11 @@ public sealed class Triangle : Shape
         /// <item>Preserves the exact side lengths during movement</item>
         /// </list>
         /// </remarks>
-        public override void Move(float dx, float dy)
-        {
+        public override void Move(float dx, float dy) {
             base.Move(dx, dy);
-            for (int i = 0; i < Vertices.Length; i++)
-            {
+            if (Vertices == null) return;
+
+            for (int i = 0; i < Vertices.Length; i++) {
                 Vertices[i] = new SKPoint(Vertices[i].X + dx, Vertices[i].Y + dy);
             }
         }

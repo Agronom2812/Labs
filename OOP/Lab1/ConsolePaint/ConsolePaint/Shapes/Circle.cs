@@ -25,7 +25,12 @@ namespace ConsolePaint.Shapes
             if (radius <= 0)
                 throw new ArgumentException("Radius must be a positive number");
 
+            Center = center;
             Radius = radius;
+
+            Background = new SKColor(255, 0, 0, 100);
+            BorderColor = SKColors.Black;
+            BorderWidth = 2;
         }
 
         /// <summary>
@@ -34,18 +39,34 @@ namespace ConsolePaint.Shapes
         /// <param name="canvas">The SkiaSharp canvas to draw on.</param>
         public override void Draw(SKCanvas canvas)
         {
-            using (var fillPaint = new SKPaint()) {
+            using (var fillPaint = new SKPaint())
+            {
                 fillPaint.Color = Background;
                 fillPaint.Style = SKPaintStyle.Fill;
                 canvas.DrawCircle(Center, Radius, fillPaint);
             }
 
-            using (var borderPaint = new SKPaint()) {
+            using (var borderPaint = new SKPaint())
+            {
                 borderPaint.Color = BorderColor;
                 borderPaint.Style = SKPaintStyle.Stroke;
                 borderPaint.StrokeWidth = BorderWidth;
                 canvas.DrawCircle(Center, Radius, borderPaint);
             }
+
+            if (IsSelected)
+            {
+                using var selectionPaint = new SKPaint
+                {
+                    Color = SKColors.Blue,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 2,
+                    PathEffect = SKPathEffect.CreateDash([5, 5], 0),
+                    IsAntialias = true
+                };
+                canvas.DrawCircle(Center, Radius + 5, selectionPaint);
+            }
+
         }
 
         /// <summary>

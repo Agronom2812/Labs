@@ -2,7 +2,7 @@
 
 namespace ConsolePaint.Dialogs;
 
-public class TriangleDialog : Dialog
+public sealed class TriangleDialog : Dialog
     {
         private readonly Entry _firstSideEntry;
         private readonly Entry _secondSideEntry;
@@ -17,33 +17,27 @@ public class TriangleDialog : Dialog
             SetDefaultSize(300, 200);
             BorderWidth = 10;
 
-            // Main container
             var contentBox = new Box(Orientation.Vertical, 5);
 
-            // First side
             var firstSideBox = new Box(Orientation.Horizontal, 5);
             firstSideBox.PackStart(new Label("First side:"), false, false, 0);
             _firstSideEntry = new Entry();
             firstSideBox.PackEnd(_firstSideEntry, true, true, 0);
 
-            // Second side
             var secondSideBox = new Box(Orientation.Horizontal, 5);
             secondSideBox.PackStart(new Label("Second side:"), false, false, 0);
             _secondSideEntry = new Entry();
             secondSideBox.PackEnd(_secondSideEntry, true, true, 0);
 
-            // Third side
             var thirdSideBox = new Box(Orientation.Horizontal, 5);
             thirdSideBox.PackStart(new Label("Third side:"), false, false, 0);
             _thirdSideEntry = new Entry();
             thirdSideBox.PackEnd(_thirdSideEntry, true, true, 0);
 
-            // Add all to main container
             contentBox.PackStart(firstSideBox, true, true, 0);
             contentBox.PackStart(secondSideBox, true, true, 0);
             contentBox.PackStart(thirdSideBox, true, true, 0);
 
-            // Buttons
             var okButton = new Button("OK");
             okButton.Clicked += OnOkClicked;
 

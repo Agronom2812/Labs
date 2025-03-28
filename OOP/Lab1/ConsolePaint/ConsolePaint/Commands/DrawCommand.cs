@@ -11,7 +11,7 @@ namespace ConsolePaint.Commands;
 /// Implements <see cref="ICommand"/> to support undo/redo operations.
 /// Maintains references to both the shape collection and the added shape.
 /// </remarks>
-public class DrawCommand(IList<IShape> shapes, IShape shape) : ICommand {
+public sealed class DrawCommand(IList<IShape> shapes, IShape shape) : ICommand {
 
     /// <summary>
     /// Executes the draw command by adding the shape.

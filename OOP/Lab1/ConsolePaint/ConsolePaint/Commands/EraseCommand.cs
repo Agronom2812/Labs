@@ -11,7 +11,7 @@ namespace ConsolePaint.Commands;
 /// Stores the removal position for accurate undo operations.
 /// Implements <see cref="ICommand"/> for undo/redo functionality.
 /// </remarks>
-public class EraseCommand(IList<IShape> shapes, IShape shape) : ICommand {
+public sealed class EraseCommand(IList<IShape> shapes, IShape shape) : ICommand {
     private int _index;
 
     /// <summary>

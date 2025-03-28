@@ -1,4 +1,5 @@
 ﻿using ConsolePaint.Shapes;
+using SkiaSharp;
 
 namespace ConsolePaint.Commands;
 
@@ -12,26 +13,25 @@ namespace ConsolePaint.Commands;
 /// This command stores the movement delta and applies it reversibly.
 /// Implements <see cref="ICommand"/> for undo/redo functionality.
 /// </remarks>
-public class MoveCommand(IShape shape, float dx, float dy) : ICommand {
-    private bool _isExecuted;
+public sealed class MoveCommand(IShape shape, float dx, float dy) : ICommand {
+    private bool _isFirstExecution = true;
+    private SKPoint _originalPosition = shape.Center;
 
-    /// <summary>
-    /// Executes the move command.
-    /// </summary>
-    public void Execute() {
-        if (_isExecuted) return;
-
-        shape.Move(dx, dy);
-        _isExecuted = true;
+    public void Execute()
+    {
+        if (_isFirstExecution)
+        {
+            shape.Move(dx, dy);
+            _isFirstExecution = false;
+        }
+        else
+        {
+            shape.Move(dx, dy);
+        }
     }
 
-    /// <summary>
-    /// Reverts the move command.
-    /// </summary>
-    public void Undo() {
-        if (!_isExecuted) return;
-
+    public void Undo()
+    {
         shape.Move(-dx, -dy);
-        _isExecuted = false;
     }
 }

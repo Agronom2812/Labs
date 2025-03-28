@@ -8,9 +8,12 @@
     </PropertyGroup>
     
     <ItemGroup>
-    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
-    <PackageReference Include="SkiaSharp" Version="3.116.1" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
+    <PackageReference Include="GtkSharp" Version="3.24.24.117-develop" />
+    <PackageReference Include="GtkSharp.Dependencies" Version="1.1.0" />
+    <PackageReference Include="SkiaSharp" Version="3.118.0-preview.2.3" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.118.0-preview.2.3" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="3.118.0-preview.2.3" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.118.0-preview.2.3" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     </ItemGroup>
 

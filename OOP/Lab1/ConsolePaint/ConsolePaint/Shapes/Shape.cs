@@ -9,6 +9,8 @@ public abstract class Shape() : IShape
     public SKColor BorderColor { get; set; } = SKColors.Black;
     public float BorderWidth { get; set; } = 1;
 
+    public bool IsSelected { get; set; }
+
     public abstract void Draw(SKCanvas canvas);
     public abstract bool Contains(SKPoint point);
 
