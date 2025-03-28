@@ -10,3 +10,18 @@
 *.exe
 *.pdb
 *.cache
+
+[Bb]in/
+[Oo]bj/
+
+# Journal and Temp files
+*.log
+*.cache
+*.tmp
+
+# Test results
+TestResults/
+*.TestResults/
+*.trx
+*.coverage
+*.coveragexml
