@@ -40,15 +40,27 @@
           "dependencies": {
             "GtkSharp": {
               "target": "Package",
-              "version": "[3.24.24.95, )"
+              "version": "[3.24.24.117-develop, )"
+            },
+            "GtkSharp.Dependencies": {
+              "target": "Package",
+              "version": "[1.1.0, )"
             },
             "SkiaSharp": {
               "target": "Package",
-              "version": "[3.116.1, )"
+              "version": "[3.118.0-preview.2.3, )"
             },
-            "SkiaSharp.Views.Desktop.Common": {
+            "SkiaSharp.NativeAssets.Linux": {
               "target": "Package",
-              "version": "[3.116.1, )"
+              "version": "[3.118.0-preview.2.3, )"
+            },
+            "SkiaSharp.NativeAssets.Win32": {
+              "target": "Package",
+              "version": "[3.118.0-preview.2.3, )"
+            },
+            "SkiaSharp.NativeAssets.macOS": {
+              "target": "Package",
+              "version": "[3.118.0-preview.2.3, )"
             },
             "System.Drawing.Common": {
               "target": "Package",
