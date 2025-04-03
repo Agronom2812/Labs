@@ -6,22 +6,22 @@ namespace ConsolePaint.Utilities
 {
     public static class CanvasSerializer
     {
-        private static readonly JsonSerializerOptions? options = new()
+        private static readonly JsonSerializerOptions? s_options = new()
         {
             WriteIndented = true,
             Converters = { new ShapeConverter() }
         };
 
-        public static string Serialize(List<IShape> shapes)
+        public static string Serialize(IEnumerable<IShape> shapes)
         {
             var wrapperList = shapes.Select(shape => new ShapeWrapper(shape)).ToList();
-            return JsonSerializer.Serialize(wrapperList, options);
+            return JsonSerializer.Serialize(wrapperList, s_options);
         }
 
-        public static List<IShape> Deserialize(string json)
+        public static List<IShape?> Deserialize(string json)
         {
-            var wrapperList = JsonSerializer.Deserialize<List<ShapeWrapper>>(json, options);
-            return wrapperList?.Select(w => w.GetShape()).ToList() ?? new List<IShape>();
+            var wrapperList = JsonSerializer.Deserialize<List<ShapeWrapper>>(json, s_options);
+            return wrapperList?.Select(w => w.GetShape()).ToList() ?? [];
         }
     }
 }

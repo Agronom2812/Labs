@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Gtk;
+﻿using Gtk;
 using ConsolePaint.Shapes;
 using ConsolePaint.Commands;
 using ConsolePaint.Dialogs;
@@ -15,7 +14,7 @@ namespace ConsolePaint
     {
         private readonly DrawingArea _canvas;
         private readonly CommandManager _cmdManager = new();
-        private readonly List<IShape> _shapes = new();
+        private readonly List<IShape> _shapes;
         private SKPoint _startPoint;
         private DrawingTool _currentTool = DrawingTool.Selector;
         private SKSurface? _surface;
@@ -26,11 +25,14 @@ namespace ConsolePaint
         private bool _isDragging;
         private readonly Button _undoButton;
         private readonly Button _redoButton;
+        private readonly Button _fillColorButton;
 
         public MainWindow() : base("Console Paint")
         {
             SetDefaultSize(800, 600);
-            DeleteEvent += (_, __) => Application.Quit();
+            DeleteEvent += (_, _) => Application.Quit();
+
+            _shapes = [];
 
             var toolbar = new Box(Orientation.Horizontal, 5)
             {
@@ -54,8 +56,20 @@ namespace ConsolePaint
             };
             _redoButton.Clicked += OnRedoClicked;
 
+            _fillColorButton = new Button
+            {
+                Label = "Fill",
+                Sensitive = false,
+                Visible = true,
+                Margin = 5
+            };
+            _fillColorButton.Clicked += OnFillColorClicked;
+
+            toolbar.PackStart(_fillColorButton, false, false, 0);
+
             toolbar.PackEnd(_undoButton, false, false, 0);
             toolbar.PackEnd(_redoButton, false, false, 0);
+
             AddToolButton(toolbar, DrawingTool.Selector, "Select");
             AddToolButton(toolbar, DrawingTool.Line, "Line");
             AddToolButton(toolbar, DrawingTool.Triangle, "Triangle");
@@ -130,7 +144,7 @@ namespace ConsolePaint
                 Expand = false
             };
 
-            button.Clicked += (_, __) =>
+            button.Clicked += (_, _) =>
             {
                 _currentTool = tool;
                 Console.WriteLine($"Tool selected: {tool}");
@@ -153,8 +167,7 @@ namespace ConsolePaint
             RedrawCanvas();
         }
 
-        private void OnCanvasDrawn(object sender, DrawnArgs args)
-        {
+        private void OnCanvasDrawn(object sender, DrawnArgs args) {
             if (_surface == null) return;
 
             using var ctx = args.Cr;
@@ -174,112 +187,153 @@ namespace ConsolePaint
 
         private void RedrawCanvas()
         {
-            if (_surface == null) return;
+            if (_surface == null)
+                return;
 
-            var canvas = _surface.Canvas;
-            canvas.Clear(SKColors.White);
-
-            foreach (var shape in _shapes)
+            try
             {
-                shape.Draw(canvas);
-            }
+                using (var canvas = _surface.Canvas)
+                {
+                    canvas.Clear(SKColors.White);
 
-            _canvas.QueueDraw();
+                    foreach (var shape in _shapes.OfType<Shape>()) {
+                        ShapeRenderer.Render(canvas, shape);
+                    }
+
+                    if (_currentShape is Shape current)
+                    {
+                        ShapeRenderer.Render(canvas, current);
+                    }
+                }
+
+                _canvas.QueueDraw();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при перерисовке: {ex}");
+            }
         }
 
-        private void OnPointerDown(object o, ButtonPressEventArgs args)
+        private void OnPointerDown(object o, ButtonPressEventArgs? args)
+{
+    try
+    {
+        if (args?.Event == null)
         {
-            var point = new SKPoint((float)args.Event.X, (float)args.Event.Y);
+            Console.WriteLine("Invalid button press event");
+            return;
+        }
 
-            if (_currentTool == DrawingTool.Selector)
+        var point = new SKPoint((float)args.Event.X, (float)args.Event.Y);
+
+        if (_currentTool == DrawingTool.Selector)
+        {
+            foreach (var shape in _shapes.OfType<IShape>()) {
+                shape.IsSelected = false;
+            }
+
+            _selectedShape = null;
+            for (int i = _shapes.Count - 1; i >= 0; i--)
             {
-                _selectedShape = _shapes.LastOrDefault(s => s.Contains(point));
+                var shape = _shapes[i];
+                if (shape.Contains(point) != true) continue;
 
-                if (_selectedShape != null)
+                _selectedShape = shape;
+                _selectedShape.IsSelected = true;
+                break;
+            }
+
+            if (_selectedShape != null)
+            {
+                if (_selectedShape is Line line)
+                {
+                    var closestPoint = GetClosestPointOnLine(line.StartPoint, line.EndPoint, point);
+                    _selectionOffset = new SKPoint(
+                        point.X - closestPoint.X,
+                        point.Y - closestPoint.Y);
+                }
+                else
                 {
                     _selectionOffset = new SKPoint(
                         point.X - _selectedShape.Center.X,
-                        point.Y - _selectedShape.Center.Y
-                    );
-                    _isDragging = true;
+                        point.Y - _selectedShape.Center.Y);
                 }
-                return;
+                _isDragging = true;
             }
 
-            _startPoint = point;
-            _isDrawing = true;
-
-            switch (_currentTool)
-            {
-                case DrawingTool.Line:
-                    _currentShape = new Line(point, point);
-                    _cmdManager.Execute(new DrawCommand(_shapes, _currentShape));
-                    break;
-
-                case DrawingTool.Rectangle:
-                    ShowRectangleDialog(point);
-                    _isDrawing = false;
-                    break;
-
-                case DrawingTool.Circle:
-                    ShowCircleDialog(point);
-                    _isDrawing = false;
-                    break;
-
-                case DrawingTool.Triangle:
-                    ShowTriangleDialog(point);
-                    _isDrawing = false;
-                    break;
-
-                case DrawingTool.Eraser:
-                    RemoveShapeAt(point);
-                    _isDrawing = false;
-                    break;
-
-                case DrawingTool.Selector:
-                    _currentShape = _shapes.LastOrDefault(s => s.Contains(point));
-                    break;
-            }
-
-            if (_currentTool == DrawingTool.Selector)
-            {
-                foreach (var shape in _shapes)
-                {
-                    shape.IsSelected = false;
-                }
-
-                _selectedShape = _shapes.LastOrDefault(s => s.Contains(point));
-
-                if (_selectedShape != null)
-                {
-                    _selectedShape.IsSelected = true;
-
-                    if (_selectedShape is Line line)
-                    {
-                        SKPoint closestPoint = GetClosestPointOnLine(line.StartPoint, line.EndPoint, point);
-                        _selectionOffset = new SKPoint(
-                            point.X - closestPoint.X,
-                            point.Y - closestPoint.Y
-                        );
-                    }
-                    else
-                    {
-                        _selectionOffset = new SKPoint(
-                            point.X - _selectedShape.Center.X,
-                            point.Y - _selectedShape.Center.Y
-                        );
-                    }
-
-                    _isDragging = true;
-                }
-                RedrawCanvas();
-                return;
-            }
-
-            RedrawCanvas();
+            UpdateSelectionState();
+            return;
         }
 
-        private SKPoint GetClosestPointOnLine(SKPoint start, SKPoint end, SKPoint point)
+        _startPoint = point;
+        _isDrawing = true;
+
+        switch (_currentTool)
+        {
+            case DrawingTool.Line:
+                _currentShape = new Line(point, point)
+                {
+                    BorderColor = SKColors.Black,
+                    Background = SKColors.Transparent,
+                    BorderWidth = 2
+                };
+                _cmdManager.Execute(new DrawCommand(_shapes, _currentShape));
+                break;
+
+            case DrawingTool.Rectangle:
+                ShowRectangleDialog(point);
+                _isDrawing = false;
+                break;
+
+            case DrawingTool.Circle:
+                ShowCircleDialog(point);
+                _isDrawing = false;
+                break;
+
+            case DrawingTool.Triangle:
+                ShowTriangleDialog(point);
+                _isDrawing = false;
+                break;
+
+            case DrawingTool.Eraser:
+                RemoveShapeAt(point);
+                _isDrawing = false;
+                break;
+            case DrawingTool.Selector:
+                break;
+        }
+
+        RedrawCanvas();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error in OnPointerDown: {ex}");
+        ShowErrorDialog("Ошибка при обработке нажатия");
+    }
+}
+
+        private void UpdateSelectionState()
+        {
+            Application.Invoke((_, _) =>
+            {
+                try
+                {
+                    bool shouldBeSensitive = _selectedShape != null;
+                    Console.WriteLine($"Setting button sensitive to {shouldBeSensitive}");
+
+                    _fillColorButton.Sensitive = shouldBeSensitive;
+
+                    _fillColorButton.QueueDraw();
+                    _fillColorButton.Parent?.QueueDraw();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error in UI update: {ex}");
+                }
+            });
+        }
+
+        private static SKPoint GetClosestPointOnLine(SKPoint start, SKPoint end, SKPoint point)
         {
             SKPoint lineVector = new SKPoint(end.X - start.X, end.Y - start.Y);
 
@@ -353,46 +407,47 @@ namespace ConsolePaint
 
         private void OnPointerUp(object o, ButtonReleaseEventArgs args)
         {
-            if (_currentTool == DrawingTool.Selector && _isDragging && _selectedShape != null)
+            try
             {
-                var currentPoint = new SKPoint((float)args.Event.X, (float)args.Event.Y);
+                if (_isDragging && _selectedShape != null)
+                {
+                    var currentPoint = new SKPoint((float)args.Event.X, (float)args.Event.Y);
+                    _cmdManager.Execute(new MoveCommand(
+                        _selectedShape,
+                        currentPoint.X - _selectionOffset.X - _selectedShape.Center.X,
+                        currentPoint.Y - _selectionOffset.Y - _selectedShape.Center.Y
+                    ));
+                }
 
-                _cmdManager.Execute(new MoveCommand(
-                    _selectedShape,
-                    currentPoint.X - _selectionOffset.X - _selectedShape.Center.X,
-                    currentPoint.Y - _selectionOffset.Y - _selectedShape.Center.Y
-                ));
+                _isDragging = false;
+                _isDrawing = false;
+                UpdateSelectionState();
             }
-
-            _isDragging = false;
-            _isDrawing = false;
-            _selectedShape = null;
-            _currentShape = null;
-
-            UpdateUndoRedoButtons();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OnPointerUp: {ex}");
+            }
         }
 
         private void ShowCircleDialog(SKPoint center)
         {
             var dialog = new CircleDialog(this);
 
-            dialog.Response += (sender, e) =>
+            dialog.Response += (_, e) =>
             {
-                try
-                {
-                    if (e.ResponseId == ResponseType.Ok)
-                    {
-                        var circle = new Circle(center, dialog.Radius)
-                        {
-                            Background = new SKColor(255, 0, 0, 100),
-                            BorderColor = SKColors.Black,
-                            BorderWidth = 2
-                        };
+                try {
+                    if (e.ResponseId != ResponseType.Ok) return;
 
-                        _cmdManager.Execute(new DrawCommand(_shapes, circle));
-                        RedrawCanvas();
-                        UpdateUndoRedoButtons();
-                    }
+                    var circle = new Circle(center, dialog.Radius)
+                    {
+                        Background = new SKColor(255, 0, 0, 100),
+                        BorderColor = SKColors.Black,
+                        BorderWidth = 2
+                    };
+
+                    _cmdManager.Execute(new DrawCommand(_shapes, circle));
+                    RedrawCanvas();
+                    UpdateUndoRedoButtons();
                 }
                 finally
                 {
@@ -407,23 +462,21 @@ namespace ConsolePaint
         {
             var dialog = new RectangleDialog(this);
 
-            dialog.Response += (sender, e) =>
+            dialog.Response += (_, e) =>
             {
-                try
-                {
-                    if (e.ResponseId == ResponseType.Ok)
-                    {
-                        var rect = new Rectangle(center, dialog.Width, dialog.Height)
-                        {
-                            Background = new SKColor(0, 255, 0, 100),
-                            BorderColor = SKColors.Black,
-                            BorderWidth = 2
-                        };
+                try {
+                    if (e.ResponseId != ResponseType.Ok) return;
 
-                        _cmdManager.Execute(new DrawCommand(_shapes, rect));
-                        RedrawCanvas();
-                        UpdateUndoRedoButtons();
-                    }
+                    var rect = new Rectangle(center, dialog.Width, dialog.Height)
+                    {
+                        Background = new SKColor(0, 255, 0, 100),
+                        BorderColor = SKColors.Black,
+                        BorderWidth = 2
+                    };
+
+                    _cmdManager.Execute(new DrawCommand(_shapes, rect));
+                    RedrawCanvas();
+                    UpdateUndoRedoButtons();
                 }
                 finally
                 {
@@ -438,22 +491,21 @@ namespace ConsolePaint
         {
             var dialog = new TriangleDialog(this);
 
-            dialog.Response += (sender, e) =>
+            dialog.Response += (_, e) =>
             {
                 try {
                     if (e.ResponseId != ResponseType.Ok) return;
 
                     var triangle = new Triangle(
                         center: clickPoint,
-                        firstSide: dialog.FirstSide,
-                        secondSide: dialog.SecondSide,
-                        thirdSide: dialog.ThirdSide,
-                        vertices: null
-                    )
+                        sideA: dialog.FirstSide,
+                        sideB: dialog.SecondSide,
+                        sideC: dialog.ThirdSide)
                     {
-                        Background = new SKColor(255, 0, 0, 100),
-                        BorderColor = SKColors.Black,
-                        BorderWidth = 2
+                        Background = new SKColor(255, 165, 0, 180),
+                        BorderColor = new SKColor(0, 0, 139),
+                        BorderWidth = 1.5f,
+                        IsSelected = false
                     };
 
                     _cmdManager.Execute(new DrawCommand(_shapes, triangle));
@@ -478,12 +530,11 @@ namespace ConsolePaint
             try
             {
                 var shape = _shapes.LastOrDefault(s => s.Contains(point));
-                if (shape != null)
-                {
-                    _cmdManager.Execute(new EraseCommand(_shapes, shape));
-                    RedrawCanvas();
-                    UpdateUndoRedoButtons();
-                }
+                if (shape == null) return;
+
+                _cmdManager.Execute(new EraseCommand(_shapes, shape));
+                RedrawCanvas();
+                UpdateUndoRedoButtons();
             }
             catch (Exception ex)
             {
@@ -553,7 +604,7 @@ namespace ConsolePaint
 
         private void OnLoadClicked(object? sender, EventArgs args)
         {
-            Application.Invoke((s, e) =>
+            Application.Invoke((_, _) =>
             {
                 var dialog = new FileChooserDialog(
                     "Open File",
@@ -572,7 +623,7 @@ namespace ConsolePaint
                     filter.Name = "JSON Files";
                     dialog.AddFilter(filter);
 
-                    dialog.Response += (o, responseArgs) =>
+                    dialog.Response += (_, responseArgs) =>
                     {
                         if (responseArgs.ResponseId == ResponseType.Accept)
                         {
@@ -603,45 +654,6 @@ namespace ConsolePaint
             });
         }
 
-        private void LoadFile()
-        {
-            var dialog = new FileChooserDialog(
-                "Open File",
-                null,
-                FileChooserAction.Open,
-                "Cancel", ResponseType.Cancel,
-                "Open", ResponseType.Accept);
-
-            try
-            {
-                var filter = new FileFilter();
-                filter.AddPattern("*.json");
-                dialog.AddFilter(filter);
-
-                if (dialog.Run() == (int)ResponseType.Accept)
-                {
-                    try
-                    {
-                        string json = File.ReadAllText(dialog.Filename);
-                        var shapes = JsonSerializer.Deserialize<List<IShape>>(json);
-
-                        _shapes.Clear();
-                        _shapes.AddRange(shapes);
-                        RedrawCanvas();
-                        ShowInfo($"Loaded {shapes.Count} shapes");
-                    }
-                    catch (Exception ex)
-                    {
-                        ShowErrorDialog($"Load error: {ex.Message}");
-                    }
-                }
-            }
-            finally
-            {
-                dialog.Destroy();
-            }
-        }
-
         private void LoadCanvasFromFile(string filename)
         {
             try
@@ -653,7 +665,7 @@ namespace ConsolePaint
                         string json = File.ReadAllText(filename);
                         var shapes = CanvasSerializer.Deserialize(json);
 
-                        Application.Invoke((s, e) =>
+                        Application.Invoke((_, _) =>
                         {
                             try
                             {
@@ -669,7 +681,7 @@ namespace ConsolePaint
                     }
                     catch (Exception ex)
                     {
-                        Application.Invoke((s, e) =>
+                        Application.Invoke((_, _) =>
                         {
                             ShowErrorDialog($"Failed to read file: {ex.Message}");
                         });
@@ -682,10 +694,10 @@ namespace ConsolePaint
             }
         }
 
-        private void ShowInfo(string message)
+        private static void ShowInfo(string message)
             => ShowMessage("Info", message, MessageType.Info);
 
-        private void ShowMessage(string title, string message, MessageType messageType)
+        private static void ShowMessage(string title, string message, MessageType messageType)
         {
             var dialog = new MessageDialog(
                 null,
@@ -703,7 +715,7 @@ namespace ConsolePaint
 
         private void ShowErrorDialog(string message)
         {
-            Application.Invoke((s, e) =>
+            Application.Invoke((_, _) =>
             {
                 var dialog = new MessageDialog(
                     this,
@@ -716,7 +728,7 @@ namespace ConsolePaint
                     WindowPosition = WindowPosition.Center
                 };
 
-                dialog.Response += (o, args) => dialog.Destroy();
+                dialog.Response += (_, _) => dialog.Destroy();
                 dialog.Show();
             });
         }
@@ -771,7 +783,8 @@ namespace ConsolePaint
 
             return base.OnKeyPressEvent(evnt);
         }
-        private void SetCurrentName(FileChooserDialog dialog, string defaultName)
+
+        private static void SetCurrentName(FileChooserDialog dialog, string defaultName)
         {
             try
             {
@@ -815,6 +828,36 @@ namespace ConsolePaint
                 Console.Error.WriteLine($"Error in SetCurrentName: {ex.Message}");
                 dialog.CurrentName = "canvas.json";
             }
+        }
+
+        private void OnFillColorClicked(object sender, EventArgs e)
+        {
+            if (_selectedShape == null) return;
+
+            using var dialog = new ColorSelectionDialog("Choose fill color");
+
+            dialog.TransientFor = this;
+            dialog.Modal = true;
+
+            var oldColor = _selectedShape.Background;
+            dialog.ColorSelection.CurrentColor = new Gdk.Color(
+                oldColor.Red,
+                oldColor.Green,
+                oldColor.Blue);
+
+            if (dialog.Run() == (int)ResponseType.Ok)
+            {
+                var newColor = dialog.ColorSelection.CurrentColor;
+                var skColor = new SKColor(
+                    (byte)newColor.Red,
+                    (byte)newColor.Green,
+                    (byte)newColor.Blue);
+
+                _cmdManager.Execute(new ChangeFillCommand(_selectedShape, skColor));
+            }
+
+            dialog.Destroy();
+            RedrawCanvas();
         }
     }
 }

@@ -4,32 +4,23 @@ using ConsolePaint.Shapes;
 
 namespace ConsolePaint.Utilities;
 
-public class ShapeWrapper
-{
+public sealed class ShapeWrapper(IShape shape) {
 
-    [JsonPropertyName("Type")]
-    public string Type { get; set; }
+    [JsonPropertyName("Type")] private string Type { get; set; } = shape.GetType().Name;
 
-    [JsonPropertyName("Data")]
-    public JsonElement Data { get; set; }
+    [JsonPropertyName("Data")] private JsonElement Data { get; set; } = JsonSerializer.SerializeToElement(shape, shape.GetType(), s_options);
 
-    private static readonly JsonSerializerOptions? options = new();
+    private static readonly JsonSerializerOptions? s_options = new();
 
-
-    public ShapeWrapper(IShape shape)
-    {
-        Type = shape.GetType().Name;
-        Data = JsonSerializer.SerializeToElement(shape, shape.GetType(), options);
-    }
 
     public IShape? GetShape()
     {
         return Type switch
         {
-            "Line" => JsonSerializer.Deserialize<Line>(Data.GetRawText(), options),
-            "Rectangle" => JsonSerializer.Deserialize<Rectangle>(Data.GetRawText(), options),
-            "Circle" => JsonSerializer.Deserialize<Circle>(Data.GetRawText(), options),
-            "Triangle" => JsonSerializer.Deserialize<Triangle>(Data.GetRawText(), options),
+            "Line" => JsonSerializer.Deserialize<Line>(Data.GetRawText(), s_options),
+            "Rectangle" => JsonSerializer.Deserialize<Rectangle>(Data.GetRawText(), s_options),
+            "Circle" => JsonSerializer.Deserialize<Circle>(Data.GetRawText(), s_options),
+            "Triangle" => JsonSerializer.Deserialize<Triangle>(Data.GetRawText(), s_options),
             _ => throw new NotSupportedException($"Type {Type} is not supported")
         };
     }
