@@ -13,24 +13,25 @@ namespace ConsolePaint.Commands;
 /// This command stores the movement delta and applies it reversibly.
 /// Implements <see cref="ICommand"/> for undo/redo functionality.
 /// </remarks>
-public sealed class MoveCommand(IShape shape, float dx, float dy) : ICommand
-{
-    private SKPoint _originalCenter = shape.Center;
-    private bool _wasExecuted = false;
+public sealed class MoveCommand(IShape shape, float dx, float dy) : ICommand {
+    private bool _isFirstExecution = true;
+    private SKPoint _originalPosition = shape.Center;
 
     public void Execute()
     {
-        if (!_wasExecuted)
+        if (_isFirstExecution)
         {
-            _originalCenter = shape.Center;
-            _wasExecuted = true;
+            shape.Move(dx, dy);
+            _isFirstExecution = false;
         }
-
-        shape.Move(dx, dy);
+        else
+        {
+            shape.Move(dx, dy);
+        }
     }
 
     public void Undo()
     {
-        shape.Center = _originalCenter;
+        shape.Move(-dx, -dy);
     }
 }
