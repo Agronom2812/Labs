@@ -1,6 +1,6 @@
 # Console Paint
 
-This is a This is a project written in C#, using OOP principles.
+This is a project written in C#, using OOP principles.
 Yury Zheludovich 353505.
 
 Main features of project:
