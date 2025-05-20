@@ -1,6 +1,6 @@
 ﻿namespace TextEditor.Core.Documents;
 
-public class MarkdownDocument : Document
+public sealed class MarkdownDocument : Document
 {
     public override void Display()
     {
@@ -18,21 +18,11 @@ public class MarkdownDocument : Document
         }
     }
 
-    public override void Save(string filePath)
+    public override void InsertText(string? text, int position)
     {
-        if (!filePath.EndsWith(".md"))
-            filePath += ".md";
+        if (position == 0 && string.IsNullOrWhiteSpace(Content))
+            text = "# " + text;
 
-        File.WriteAllText(filePath, Content);
-        Console.WriteLine($"[Markdown] Saved to {Path.GetFullPath(filePath)}");
-    }
-
-    public override void Load(string filePath)
-    {
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException("Document not found", filePath);
-
-        Content = File.ReadAllText(filePath);
-        Title = Path.GetFileNameWithoutExtension(filePath);
+        base.InsertText(text, position);
     }
 }

@@ -1,23 +1,6 @@
 ﻿namespace TextEditor.Core.Documents;
 
-public class PlainTextDocument : Document {
-    public override void Save(string filePath)
-    {
-        if (!filePath.EndsWith(".txt"))
-            filePath += ".txt";
-
-        File.WriteAllText(filePath, Content);
-        Console.WriteLine($"[PlainText] Saved to {Path.GetFullPath(filePath)}");
-    }
-
-    public override void Load(string filePath)
-    {
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException("Document not found", filePath);
-
-        Content = File.ReadAllText(filePath);
-        Title = Path.GetFileNameWithoutExtension(filePath);
-    }
+public sealed class PlainTextDocument : Document {
 
     public override void Display()
     {
@@ -25,4 +8,17 @@ public class PlainTextDocument : Document {
         Console.WriteLine(Content);
         Console.WriteLine($"=== Length: {Content.Length} chars ===");
     }
+
+    public override void InsertText(string? text, int position)
+    {
+        base.InsertText(text, position);
+        Console.WriteLine($"Inserted {text.Length} chars at position {position}");
+    }
+
+    public override void DeleteText(int start, int length)
+    {
+        base.DeleteText(start, length);
+        Console.WriteLine($"Deleted {length} chars from position {start}");
+    }
+
 }

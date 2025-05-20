@@ -2,9 +2,9 @@
 
 namespace TextEditor.Core.Factories;
 
-public class DocumentFactory
+public sealed class DocumentFactory
 {
-    public Document CreateDocument(string type) {
+    public static Document CreateDocument(string type) {
         return type.ToLower() switch {
             "plaintext" => new PlainTextDocument(),
             "markdown" => new MarkdownDocument(),

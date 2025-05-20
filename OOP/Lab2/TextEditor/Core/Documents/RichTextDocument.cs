@@ -1,14 +1,12 @@
-﻿using System.Text.Json;
+﻿namespace TextEditor.Core.Documents;
 
-namespace TextEditor.Core.Documents;
-
-public class RichTextDocument : Document
+public sealed class RichTextDocument : Document
 {
-    private List<TextFormat> Formats { get; set; } = [];
+    private List<TextFormat> Formats { get; } = [];
 
     public override void Display()
     {
-        Console.WriteLine($"✨ {Title} (Rich Text) ✨");
+        Console.WriteLine($"{Title} (Rich Text)");
 
         for (int i = 0; i < Content.Length; i++)
         {
@@ -30,32 +28,16 @@ public class RichTextDocument : Document
         Console.WriteLine($"\n🔠 Formatting: {Formats.Count} segments");
     }
 
-    public override void Save(string filePath)
+    public override void InsertText(string? text, int position)
     {
-        if (!filePath.EndsWith(".rtf"))
-            filePath += ".rtf";
-
-        var data = new {
-            Content,
-            Formats
-        };
-
-        File.WriteAllText(filePath, JsonSerializer.Serialize(data));
-        Console.WriteLine($"[RichText] Saved to {Path.GetFullPath(filePath)}");
-    }
-
-    public override void Load(string filePath)
-    {
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException("Document not found", filePath);
-
-        dynamic? data = JsonSerializer.Deserialize<dynamic>(File.ReadAllText(filePath));
-        if (data != null) {
-            Content = data.GetProperty("Content").GetString();
-            Formats = JsonSerializer.Deserialize<List<TextFormat>>(data.GetProperty("Formats").GetRawText());
+        base.InsertText(text, position);
+        foreach (var format in Formats)
+        {
+            if (format.Start >= position)
+                format.Start += text.Length;
+            if (format.End >= position)
+                format.End += text.Length;
         }
-
-        Title = Path.GetFileNameWithoutExtension(filePath);
     }
 }
 

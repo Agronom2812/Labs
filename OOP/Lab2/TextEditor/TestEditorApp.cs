@@ -1,111 +1,178 @@
 ﻿using TextEditor.Core.Documents;
 using TextEditor.Core.Factories;
+using TextEditor.Services;
 
 namespace TextEditor;
 
 public sealed class TextEditorApp
 {
-    private Document _currentDocument;
-    private readonly DocumentFactory _documentFactory = new DocumentFactory();
+    private Document? _currentDocument;
+    private readonly DocumentSerializerService _serializer = new();
 
     public void Run()
     {
-        Console.WriteLine("Welcome to Console Text Editor!");
-        Console.WriteLine("Type 'help' for available commands.");
+        Console.WriteLine("=== Консольный текстовый редактор ===");
 
         while (true)
         {
-            Console.Write("> ");
-            string? input = Console.ReadLine();
+            ShowMainMenu();
+            int choice = GetUserChoice(1, 6);
 
-            if (string.IsNullOrWhiteSpace(input))
-                continue;
-
-            ProcessCommand(input);
-        }
-    }
-
-    private void ProcessCommand(string command)
-    {
-        string[] parts = command.Split(' ');
-        string cmd = parts[0].ToLower();
-
-        try
-        {
-            switch (cmd)
+            try
             {
-                case "help":
-                    ShowHelp();
-                    break;
-                case "new":
-                    CreateNewDocument(parts);
-                    break;
-                case "open":
-                    OpenDocument(parts);
-                    break;
-                case "save":
-                    SaveDocument(parts);
-                    break;
-                case "exit":
-                    Environment.Exit(0);
-                    break;
-                default:
-                    Console.WriteLine($"Unknown command: {cmd}");
-                    break;
+                ProcessMenuChoice(choice);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка: {ex.Message}");
+                Console.ReadKey();
             }
         }
-        catch (Exception ex)
+    }
+
+    private static void ShowMainMenu()
+    {
+        Console.Clear();
+        Console.WriteLine("Главное меню:");
+        Console.WriteLine("1. Создать новый документ");
+        Console.WriteLine("2. Открыть документ");
+        Console.WriteLine("3. Сохранить документ");
+        Console.WriteLine("4. Показать документ");
+        Console.WriteLine("5. Редактировать документ");
+        Console.WriteLine("6. Выход");
+        Console.Write("Выберите действие (1-6): ");
+    }
+
+    private static int GetUserChoice(int min, int max)
+    {
+        int choice;
+        while (!int.TryParse(Console.ReadLine(), out choice) || choice < min || choice > max)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.Write($"Введите число от {min} до {max}: ");
+        }
+        return choice;
+    }
+
+    private void ProcessMenuChoice(int choice)
+    {
+        switch (choice)
+        {
+            case 1: CreateDocument(); break;
+            case 2: OpenDocument(); break;
+            case 3: SaveDocument(); break;
+            case 4: DisplayDocument(); break;
+            case 5: EditDocument(); break;
+            case 6: Environment.Exit(0); break;
         }
     }
 
-    private static void ShowHelp()
+    private void CreateDocument()
     {
-        Console.WriteLine("Available commands:");
-        Console.WriteLine("help - Show this help");
-        Console.WriteLine("new <type> - Create new document (types: plaintext, markdown, richtext)");
-        Console.WriteLine("open <path> - Open document from file");
-        Console.WriteLine("save <path> - Save document to file");
-        Console.WriteLine("exit - Exit the program");
-    }
+        Console.Clear();
+        Console.WriteLine("Выберите тип документа:");
+        Console.WriteLine("1. Обычный текст");
+        Console.WriteLine("2. Markdown");
+        Console.WriteLine("3. RichText");
+        Console.Write("Ваш выбор (1-3): ");
 
-    private void CreateNewDocument(string[] parts)
-    {
-        if (parts.Length < 2)
-            throw new ArgumentException("Document type not specified");
-
-        _currentDocument = _documentFactory.CreateDocument(parts[1]);
-        _currentDocument.Title = "Untitled";
-        _currentDocument.Content = string.Empty;
-        Console.WriteLine($"Created new {parts[1]} document");
-    }
-
-    private void OpenDocument(string[] parts)
-    {
-        if (parts.Length < 2)
-            throw new ArgumentException("File path not specified");
-
-        string extension = Path.GetExtension(parts[1]).ToLower();
-        _currentDocument = extension switch {
-            ".txt" => _documentFactory.CreateDocument("plaintext"),
-            ".md" => _documentFactory.CreateDocument("markdown"),
-            _ => throw new ArgumentException("Unsupported file format")
+        int typeChoice = GetUserChoice(1, 3);
+        _currentDocument = typeChoice switch
+        {
+            1 => new PlainTextDocument(),
+            2 => new MarkdownDocument(),
+            3 => new RichTextDocument(),
+            _ => throw new InvalidOperationException()
         };
 
-        _currentDocument.Load(parts[1]);
-        Console.WriteLine($"Opened document from {parts[1]}");
+        Console.WriteLine($"Создан новый документ типа: {_currentDocument.GetType().Name}");
+        Console.ReadKey();
     }
 
-    private void SaveDocument(string[] parts)
+    private void OpenDocument()
+    {
+        Console.Clear();
+        Console.Write("Введите путь к файлу: ");
+        string? path = Console.ReadLine();
+
+        _currentDocument = _serializer.Load(path);
+        Console.WriteLine($"Документ загружен: {Path.GetFileName(path)}");
+        Console.ReadKey();
+    }
+
+    private void SaveDocument()
     {
         if (_currentDocument == null)
-            throw new InvalidOperationException("No document is currently open");
+            throw new InvalidOperationException("Нет активного документа");
 
-        if (parts.Length < 2)
-            throw new ArgumentException("File path not specified");
+        Console.Clear();
+        Console.Write("Введите путь для сохранения: ");
+        string? path = Console.ReadLine();
 
-        _currentDocument.Save(parts[1]);
-        Console.WriteLine($"Document saved to {parts[1]}");
+        Console.WriteLine("Выберите формат:");
+        Console.WriteLine("1. TXT");
+        Console.WriteLine("2. JSON");
+        Console.WriteLine("3. XML");
+        Console.Write("Ваш выбор (1-3): ");
+
+        int formatChoice = GetUserChoice(1, 3);
+        string format = formatChoice switch
+        {
+            1 => "txt",
+            2 => "json",
+            3 => "xml",
+            _ => throw new InvalidOperationException()
+        };
+
+        _serializer.Save(_currentDocument, path, format);
+        Console.WriteLine($"Документ сохранен как {format}");
+        Console.ReadKey();
+    }
+
+    private void DisplayDocument()
+    {
+        if (_currentDocument == null)
+            throw new InvalidOperationException("Нет активного документа");
+
+        Console.Clear();
+        _currentDocument.Display();
+        Console.WriteLine("\nНажмите любую клавишу...");
+        Console.ReadKey();
+    }
+
+    private void EditDocument()
+    {
+        if (_currentDocument == null)
+            throw new InvalidOperationException("Нет активного документа");
+
+        Console.Clear();
+        Console.WriteLine("Текущее содержимое:");
+        _currentDocument.Display();
+
+        Console.WriteLine("\nКоманды редактирования:");
+        Console.WriteLine("1. Вставить текст");
+        Console.WriteLine("2. Удалить текст");
+        Console.Write("Ваш выбор (1-2): ");
+
+        int editChoice = GetUserChoice(1, 2);
+
+        if (editChoice == 1)
+        {
+            Console.Write("Введите текст для вставки: ");
+            string? text = Console.ReadLine();
+            Console.Write("Введите позицию: ");
+            int pos = GetUserChoice(0, int.MaxValue);
+            _currentDocument.InsertText(text, pos);
+        }
+        else
+        {
+            Console.Write("Введите начальную позицию: ");
+            int start = GetUserChoice(0, int.MaxValue);
+            Console.Write("Введите длину: ");
+            int length = GetUserChoice(1, int.MaxValue);
+            _currentDocument.DeleteText(start, length);
+        }
+
+        Console.WriteLine("Изменения применены!");
+        Console.ReadKey();
     }
 }
