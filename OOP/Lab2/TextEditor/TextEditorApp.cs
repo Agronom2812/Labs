@@ -1,4 +1,5 @@
-﻿using TextEditor.Core.Documents;
+﻿using TextEditor.Core.Commands;
+using TextEditor.Core.Documents;
 using TextEditor.Services;
 
 namespace TextEditor;
@@ -8,19 +9,20 @@ public sealed class TextEditorApp {
     private readonly DocumentSerializerService _serializer = new();
     private readonly string _defaultDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Documents");
     private string _currentDocumentPath = string.Empty;
+    private readonly CommandHistory _history = new();
 
-    public void Run()
-    {
-        while (true)
-        {
-            try
-            {
+    public void Run() {
+        InitializeDocumentsDirectory();
+
+        while (true) {
+            try {
+                HandleHotkeys();
+
                 ShowMainMenu();
                 int choice = GetUserChoice(1, 8);
                 ProcessMenuChoice(choice);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Console.WriteLine($"Критическая ошибка: {ex.Message}");
                 Console.WriteLine("Нажмите любую клавишу для продолжения...");
                 Console.ReadKey();
@@ -34,10 +36,11 @@ public sealed class TextEditorApp {
         }
     }
 
-    private void ShowMainMenu() {
+    private void ShowMainMenu()
+    {
         Console.Clear();
         Console.WriteLine("=== Консольный текстовый редактор ===");
-        Console.WriteLine($"Текущий документ: {(_currentDocument != null ? _currentDocument.Title : "не выбран")}");
+        Console.WriteLine($"Текущий документ: {(_currentDocument?.Title ?? "не выбран")}");
         Console.WriteLine("1. Создать документ");
         Console.WriteLine("2. Открыть документ");
         Console.WriteLine("3. Сохранить документ");
@@ -45,8 +48,10 @@ public sealed class TextEditorApp {
         Console.WriteLine("5. Переименовать документ");
         Console.WriteLine("6. Показать содержимое");
         Console.WriteLine("7. Редактировать содержимое");
-        Console.WriteLine("8. Выход");
-        Console.Write("Выберите действие (1-8): ");
+        Console.WriteLine("8. Отменить действие (Ctrl+Z)");
+        Console.WriteLine("9. Повторить действие (Ctrl+Y)");
+        Console.WriteLine("0. Выход");
+        Console.Write("Выберите действие (0-9): ");
     }
 
     private void CreateDocument() {
@@ -85,6 +90,8 @@ public sealed class TextEditorApp {
         _currentDocument.Title = Path.GetFileNameWithoutExtension(_currentDocumentPath);
         Console.WriteLine($"\nСоздан новый документ: {Path.GetFileName(_currentDocumentPath)}");
         Task.Delay(1500).Wait();
+
+        _history.Clear();
     }
 
     private void OpenDocument() {
@@ -117,6 +124,7 @@ public sealed class TextEditorApp {
         finally {
             Task.Delay(1500).Wait();
         }
+        _history.Clear();
     }
 
     private void SaveDocument() {
@@ -158,7 +166,7 @@ public sealed class TextEditorApp {
             return;
         }
 
-        if (_currentDocument.Exists(_currentDocumentPath)) {
+        if (Document.Exists(_currentDocumentPath)) {
             DocumentSerializerService.DeleteDocument(_currentDocumentPath);
             Console.WriteLine($"Deleted: {Path.GetFileName(_currentDocumentPath)}");
         }
@@ -193,13 +201,10 @@ public sealed class TextEditorApp {
         Console.ReadKey();
     }
 
-    private static int GetUserChoice(int min, int max, int maxAttempts = 3)
-    {
+    private static int GetUserChoice(int min, int max, int maxAttempts = 3) {
         int attempts = 0;
-        while (attempts < maxAttempts)
-        {
-            if (int.TryParse(Console.ReadLine(), out int choice) && choice >= min && choice <= max)
-            {
+        while (attempts < maxAttempts) {
+            if (int.TryParse(Console.ReadLine(), out int choice) && choice >= min && choice <= max) {
                 return choice;
             }
 
@@ -221,147 +226,50 @@ public sealed class TextEditorApp {
             case 5: RenameCurrentDocument(); break;
             case 6: DisplayDocument(); break;
             case 7: HandleEditOperations(); break;
-            case 8: Environment.Exit(0); break;
+            case 8: UndoOperation(); break;
+            case 9: RedoOperation(); break;
+            case 0: Environment.Exit(0); break;
         }
     }
 
-    private void EditDocument() {
-        if (_currentDocument == null) {
-            Console.WriteLine("\nОшибка: нет активного документа");
-            Task.Delay(1500).Wait();
-            return;
-        }
-
-        try {
-            Console.Clear();
-            Console.WriteLine($"=== Редактирование документа: {_currentDocument.Title} ===");
-            Console.WriteLine("Выберите тип редактирования:");
-            Console.WriteLine("1. Редактировать содержимое");
-            Console.WriteLine("2. Редактировать метаданные (название)");
-            Console.WriteLine("3. Вернуться в главное меню");
-            Console.Write("Ваш выбор (1-3): ");
-
-            int choice = GetUserChoice(1, 3);
-
-            switch (choice) {
-                case 1:
-                    EditContent();
-                    break;
-                case 2:
-                    EditMetadata();
-                    break;
-                case 3:
-                    return;
-            }
-        }
-        catch (Exception ex) {
-            Console.WriteLine($"\nКритическая ошибка: {ex.Message}");
-            Console.ReadKey();
-        }
-    }
-
-    private void EditContent() {
-        Console.Clear();
-        Console.WriteLine($"=== Редактирование содержимого ===");
-        Console.WriteLine("Текущее содержимое:");
-        _currentDocument?.Display();
-
-        Console.WriteLine("\nДоступные операции:");
-        Console.WriteLine("1. Вставить текст");
-        Console.WriteLine("2. Удалить текст");
-        Console.WriteLine("3. Вернуться назад");
-        Console.Write("Ваш выбор (1-3): ");
-
-        int operation = GetUserChoice(1, 3);
-
-        switch (operation) {
-            case 1:
-                InsertTextOperation();
-                break;
-            case 2:
-                DeleteTextOperation();
-                break;
-            case 3:
-                return;
-        }
-    }
-
-    private void InsertTextOperation()
-    {
-        if (_currentDocument == null)
-        {
-            Console.WriteLine("Нет активного документа");
-            return;
-        }
-
-        Console.Write("Введите текст для вставки: ");
+    private void InsertTextOperation() {
+        Console.Write("\nВведите текст для вставки: ");
         string? text = Console.ReadLine();
 
-        if (string.IsNullOrEmpty(text))
-        {
+        if (string.IsNullOrEmpty(text)) {
             Console.WriteLine("Текст не может быть пустым");
             return;
         }
 
-        Console.Write($"Введите позицию (0-{_currentDocument.Content.Length}): ");
-        int position = GetUserChoice(0, _currentDocument.Content.Length);
+        if (_currentDocument is { Content: not null }) {
+            Console.Write($"Введите позицию (0-{_currentDocument.Content.Length}): ");
+            int position = GetUserChoice(0, _currentDocument.Content.Length);
 
-        try
-        {
-            _currentDocument.InsertText(text, position);
-            Console.WriteLine("Текст успешно добавлен");
+            var command = new InsertTextCommand(_currentDocument, text, position);
+            _history.Execute(command);
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка: {ex.Message}");
-        }
+
+        Console.WriteLine("Текст успешно вставлен");
+        Task.Delay(1000).Wait();
     }
 
-    private void DeleteTextOperation()
-    {
-        if (_currentDocument == null || string.IsNullOrEmpty(_currentDocument.Content))
-        {
-            Console.WriteLine("Документ пуст или не выбран");
-            return;
+    private void DeleteTextOperation() {
+        if (_currentDocument is { Content: not null }) {
+            Console.Write($"\nВведите начальную позицию (0-{_currentDocument.Content.Length - 1}): ");
+            int start = GetUserChoice(0, _currentDocument.Content.Length - 1);
+
+            Console.Write($"Введите длину (1-{_currentDocument.Content.Length - start}): ");
+            int length = GetUserChoice(1, _currentDocument.Content.Length - start);
+
+            var command = new DeleteTextCommand(_currentDocument, start, length);
+            _history.Execute(command);
         }
 
-        Console.Write($"Введите начальную позицию (0-{_currentDocument.Content.Length - 1}): ");
-        int start = GetUserChoice(0, _currentDocument.Content.Length - 1);
-
-        Console.Write($"Введите длину (1-{_currentDocument.Content.Length - start}): ");
-        int length = GetUserChoice(1, _currentDocument.Content.Length - start);
-
-        try
-        {
-            _currentDocument.DeleteText(start, length);
-            Console.WriteLine("Текст успешно удален");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка: {ex.Message}");
-        }
+        Console.WriteLine("Текст успешно удален");
+        Task.Delay(1000).Wait();
     }
 
-    private void EditMetadata() {
-        Console.Clear();
-        Console.WriteLine($"=== Редактирование метаданных ===");
-        Console.WriteLine($"Текущее название: {_currentDocument?.Title}");
-        Console.Write("Введите новое название: ");
-
-        string? newTitle = Console.ReadLine()?.Trim();
-        if (!string.IsNullOrWhiteSpace(newTitle)) {
-            if (_currentDocument != null) _currentDocument.Title = newTitle;
-            Console.WriteLine("\nНазвание успешно изменено!");
-        }
-        else {
-            Console.WriteLine("\nОшибка: название не может быть пустым");
-        }
-
-        Task.Delay(1500).Wait();
-    }
-
-    private void HandleEditOperations()
-    {
+    private void HandleEditOperations() {
         Console.WriteLine("\nРедактирование:");
         Console.WriteLine("1. Вставить текст");
         Console.WriteLine("2. Удалить текст");
@@ -374,8 +282,7 @@ public sealed class TextEditorApp {
 
         int choice = GetUserChoice(1, 7);
 
-        switch (choice)
-        {
+        switch (choice) {
             case 1:
                 InsertTextOperation();
                 break;
@@ -399,17 +306,16 @@ public sealed class TextEditorApp {
         }
     }
 
-    private void CopyOperation()
-    {
-        if (_currentDocument == null)
-        {
+    private void CopyOperation() {
+        if (_currentDocument == null) {
             Console.WriteLine("Нет активного документа");
             return;
         }
 
-        try
-        {
+        try {
             Console.Write("Введите начальную позицию: ");
+            if (_currentDocument.Content == null) return;
+
             int start = GetUserChoice(0, _currentDocument.Content.Length - 1);
 
             Console.Write($"Введите длину (макс. {_currentDocument.Content.Length - start}): ");
@@ -418,54 +324,49 @@ public sealed class TextEditorApp {
             _currentDocument.Copy(start, length);
             Console.WriteLine($"Скопировано {length} символов");
         }
-        catch (ArgumentOutOfRangeException ex)
-        {
+        catch (ArgumentOutOfRangeException ex) {
             Console.WriteLine($"Ошибка копирования: {ex.Message}");
         }
-        finally
-        {
+        finally {
             Task.Delay(1500).Wait();
         }
     }
 
-    private void PasteOperation()
-    {
-        if (_currentDocument == null)
-        {
+    private void PasteOperation() {
+        if (_currentDocument == null) {
             Console.WriteLine("Нет активного документа");
             return;
         }
 
-        try
-        {
+        try {
             Console.Write("Введите позицию для вставки: ");
-            int position = GetUserChoice(0, _currentDocument.Content.Length);
+            if (_currentDocument.Content != null) {
+                int position = GetUserChoice(0, _currentDocument.Content.Length);
 
-            _currentDocument.Paste(position);
+                _currentDocument.Paste(position);
+            }
+
             Console.WriteLine("Текст вставлен из буфера");
         }
-        catch (ArgumentOutOfRangeException ex)
-        {
+        catch (ArgumentOutOfRangeException ex) {
             Console.WriteLine($"Ошибка вставки: {ex.Message}");
         }
-        finally
-        {
+        finally {
             Task.Delay(1500).Wait();
         }
     }
 
-    private void CutOperation()
-    {
-        if (_currentDocument == null)
-        {
+    private void CutOperation() {
+        if (_currentDocument == null) {
             Console.WriteLine("Нет активного документа");
             Task.Delay(1500).Wait();
             return;
         }
 
-        try
-        {
+        try {
             Console.Write("Введите начальную позицию: ");
+            if (_currentDocument.Content == null) return;
+
             int start = GetUserChoice(0, _currentDocument.Content.Length - 1);
 
             Console.Write($"Введите длину (макс. {_currentDocument.Content.Length - start}): ");
@@ -474,27 +375,22 @@ public sealed class TextEditorApp {
             _currentDocument.Cut(start, length);
             Console.WriteLine($"Вырезано {length} символов");
         }
-        catch (ArgumentOutOfRangeException ex)
-        {
+        catch (ArgumentOutOfRangeException ex) {
             Console.WriteLine($"Ошибка: {ex.Message}");
         }
-        finally
-        {
+        finally {
             Task.Delay(1500).Wait();
         }
     }
 
 
-    private void FormatTextOperation()
-    {
-        if (_currentDocument is not RichTextDocument richTextDoc)
-        {
+    private void FormatTextOperation() {
+        if (_currentDocument is not RichTextDocument richTextDoc) {
             Console.WriteLine("Форматирование доступно только для RichText документов");
             return;
         }
 
-        if (string.IsNullOrEmpty(richTextDoc.Content))
-        {
+        if (string.IsNullOrEmpty(richTextDoc.Content)) {
             Console.WriteLine("Документ пуст. Сначала добавьте текст.");
             return;
         }
@@ -511,10 +407,8 @@ public sealed class TextEditorApp {
         Console.WriteLine("3. Подчеркивание");
         int formatChoice = GetUserChoice(1, 3);
 
-        try
-        {
-            switch (formatChoice)
-            {
+        try {
+            switch (formatChoice) {
                 case 1:
                     richTextDoc.ApplyBold(start, length);
                     break;
@@ -525,11 +419,42 @@ public sealed class TextEditorApp {
                     richTextDoc.ApplyUnderline(start, length);
                     break;
             }
+
             Console.WriteLine("Форматирование применено");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Console.WriteLine($"Ошибка форматирования: {ex.Message}");
+        }
+    }
+
+    private void UndoOperation() {
+        Console.WriteLine(_history.Undo() ? "Последнее действие отменено" : "Нет действий для отмены");
+
+        Task.Delay(1000).Wait();
+    }
+
+    private void RedoOperation() {
+        Console.WriteLine(_history.Redo() ? "Действие восстановлено" : "Нет действий для восстановления");
+
+        Task.Delay(1000).Wait();
+    }
+
+    private void HandleHotkeys()
+    {
+        if (!Console.KeyAvailable) return;
+
+        var key = Console.ReadKey(true);
+
+        if ((key.Modifiers & ConsoleModifiers.Control) == 0) return;
+
+        switch (key.Key)
+        {
+            case ConsoleKey.Z:
+                UndoOperation();
+                break;
+            case ConsoleKey.Y:
+                RedoOperation();
+                break;
         }
     }
 }

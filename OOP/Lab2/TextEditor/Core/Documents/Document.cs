@@ -6,7 +6,6 @@ namespace TextEditor.Core.Documents;
 public abstract class Document {
     public string? Title { get; set; } = "Новый документ";
     public string? Content { get; set; } = string.Empty;
-    protected string ClipboardBuffer = string.Empty;
 
     public void Copy(int start, int length)
     {
@@ -31,55 +30,7 @@ public abstract class Document {
         InsertText(ClipboardService.Paste(), position);
     }
 
-    public void ApplyFormat(int start, int length, Func<string, string> formatter)
-    {
-        if (formatter == null)
-        {
-            throw new ArgumentNullException(nameof(formatter), "Функция форматирования не может быть null");
-        }
-
-        if (start < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(start), start,
-                $"Начальная позиция {start} не может быть отрицательной");
-        }
-
-        if (length < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(length), length,
-                $"Длина {length} не может быть отрицательной");
-        }
-
-        if (Content != null && start >= Content.Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(start), start,
-                $"Начальная позиция {start} превышает длину текста ({Content.Length})");
-        }
-
-        if (Content != null && start + length > Content.Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(length), length,
-                $"Суммарная длина {start + length} превышает длину текста ({Content.Length})");
-        }
-
-        try
-        {
-            string? selectedText = Content?.Substring(start, length);
-
-            if (selectedText == null) return;
-
-            string formattedText = formatter(selectedText);
-
-            Content = Content?.Remove(start, length).Insert(start, formattedText);
-        }
-        catch (Exception ex) when (ex is ArgumentOutOfRangeException or ArgumentException or NullReferenceException)
-        {
-            Console.Error.WriteLine($"Ошибка форматирования: {ex.Message}");
-            throw;
-        }
-    }
-
-    public virtual bool Exists(string path)
+    public static bool Exists(string path)
     {
         return File.Exists(path);
     }
@@ -112,12 +63,6 @@ public abstract class Document {
             EnsureExtension(filePath, serializer.FileExtension),
             serializer.Serialize(this)
         );
-    }
-
-    public static Document? Load(string filePath)
-    {
-        var serializer = SerializerFactory.GetSerializer(filePath);
-        return serializer.Deserialize(File.ReadAllText(filePath));
     }
 
     public abstract void Display();

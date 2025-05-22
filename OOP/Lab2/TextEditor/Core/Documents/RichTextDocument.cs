@@ -1,10 +1,8 @@
-﻿using TextEditor.Core.Formatting;
-
-namespace TextEditor.Core.Documents;
+﻿namespace TextEditor.Core.Documents;
 
     public sealed class RichTextDocument : Document
     {
-        public List<TextFormat> Formats { get; } = new();
+        private List<TextFormat> Formats { get; } = new();
 
         public override void Display()
         {
@@ -84,25 +82,28 @@ namespace TextEditor.Core.Documents;
         private void ValidateTextRange(int start, int length)
         {
             if (start < 0)
-                throw new ArgumentOutOfRangeException(nameof(start), start, "Начальная позиция не может быть отрицательной");
+                throw new ArgumentOutOfRangeException(nameof(start), start,
+                    "Начальная позиция не может быть отрицательной");
 
             if (length <= 0)
                 throw new ArgumentOutOfRangeException(nameof(length), length, "Длина должна быть положительной");
 
-            if (start >= Content.Length)
-                throw new ArgumentOutOfRangeException(nameof(start), start, $"Начальная позиция {start} превышает длину текста {Content.Length}");
+            if (Content != null && start >= Content.Length)
+                throw new ArgumentOutOfRangeException(nameof(start), start,
+                    $"Начальная позиция {start} превышает длину текста {Content.Length}");
 
-            if (start + length > Content.Length)
-                throw new ArgumentOutOfRangeException(nameof(length), length, $"Конечная позиция {start + length} превышает длину текста {Content.Length}");
+            if (Content != null && start + length > Content.Length)
+                throw new ArgumentOutOfRangeException(nameof(length), length,
+                    $"Конечная позиция {start + length} превышает длину текста {Content.Length}");
         }
 
-        public override void InsertText(string text, int position)
+        public override void InsertText(string? text, int position)
         {
-            if (text == null)
-                throw new ArgumentNullException(nameof(text));
+        ArgumentNullException.ThrowIfNull(text);
 
-            if (position < 0 || position > Content.Length)
-                throw new ArgumentOutOfRangeException(nameof(position), position, $"Позиция должна быть в диапазоне [0, {Content.Length}]");
+        if (Content != null && (position < 0 || position > Content.Length))
+                throw new ArgumentOutOfRangeException(nameof(position), position,
+                    $"Позиция должна быть в диапазоне [0, {Content.Length}]");
 
             base.InsertText(text, position);
 
@@ -117,11 +118,11 @@ namespace TextEditor.Core.Documents;
 
         public override void DeleteText(int start, int length)
         {
-            if (start < 0 || start >= Content.Length)
+            if (Content != null && (start < 0 || start >= Content.Length))
                 throw new ArgumentOutOfRangeException(nameof(start), start,
                     $"Начальная позиция должна быть в диапазоне [0, {Content.Length - 1}]");
 
-            if (length <= 0 || start + length > Content.Length)
+            if (Content != null && (length <= 0 || start + length > Content.Length))
                 throw new ArgumentOutOfRangeException(nameof(length), length,
                     $"Некорректная длина для удаления при стартовой позиции {start}");
 
@@ -144,11 +145,11 @@ namespace TextEditor.Core.Documents;
         }
     }
 
-    public class TextFormat
+    public sealed class TextFormat
     {
         public int Start { get; set; }
         public int End { get; set; }
-        public bool IsBold { get; set; }
-        public bool IsItalic { get; set; }
-        public bool IsUnderline { get; set; }
+        public bool IsBold { get; init; }
+        public bool IsItalic { get; init; }
+        public bool IsUnderline { get; init; }
     }

@@ -1,6 +1,6 @@
 ﻿namespace TextEditor.Core.Commands;
 
-public class CommandHistory
+public sealed class CommandHistory
 {
     private readonly Stack<ICommand> _undoStack = new();
     private readonly Stack<ICommand> _redoStack = new();

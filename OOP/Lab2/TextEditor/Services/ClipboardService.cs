@@ -8,18 +8,16 @@ public static class ClipboardService
     public static void Copy(string? text, int start, int length)
     {
         s_buffer = text;
-        s_lastSelection = new TextSelection(start, length);
+        s_lastSelection = new TextSelection();
     }
 
     public static void Cut(string? text, int start, int length)
     {
         Copy(text, start, length);
-        s_buffer = text.Substring(start, length);
+        s_buffer = text?.Substring(start, length);
     }
 
     public static string? Paste() => s_buffer;
 
-    public static TextSelection? GetLastSelection() => s_lastSelection;
-
-    public sealed record TextSelection(int Start, int Length);
+    private sealed record TextSelection();
 }

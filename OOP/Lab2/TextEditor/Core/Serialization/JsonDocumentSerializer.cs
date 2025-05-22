@@ -9,9 +9,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer{
     public string Serialize(Document? document)
     {
         return JsonSerializer.Serialize(new {
-            document.Title,
-            document.Content,
-            Type = document.GetType().Name
+            document?.Title,
+            document?.Content,
+            Type = document?.GetType().Name
         });
     }
 

@@ -2,12 +2,12 @@
 
 namespace TextEditor.Core.Serialization;
 
-public class TextSerializer : IDocumentSerializer {
+public sealed class TextSerializer : IDocumentSerializer {
     public string FileExtension => ".txt";
 
     public string? Serialize(Document? document)
     {
-        return document.Content;
+        return document?.Content;
     }
 
     public Document? Deserialize(string data)

@@ -1,5 +1,4 @@
 ﻿using TextEditor.Core.Documents;
-using TextEditor.Core.Factories;
 using TextEditor.Core.Serialization;
 
 namespace TextEditor.Services;
@@ -26,7 +25,7 @@ public sealed class DocumentSerializerService
         if (!_serializers.TryGetValue(ext, out var serializer))
             throw new NotSupportedException($"File format '{ext}' not supported");
 
-        return serializer.Deserialize(File.ReadAllText(path));
+        return serializer.Deserialize(File.ReadAllText(path ?? throw new ArgumentNullException(nameof(path))));
     }
 
     public static void DeleteDocument(string path)

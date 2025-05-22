@@ -1,11 +1,8 @@
 ﻿namespace TextEditor.Core.Formatting;
 
-public abstract class TextDecorator : ITextComponent
-{
-    protected ITextComponent _component;
+public abstract class TextDecorator(ITextComponent component) : ITextComponent {
+    protected readonly ITextComponent Component = component;
 
-    protected TextDecorator(ITextComponent component) => _component = component;
-
-    public virtual string GetText() => _component.GetText();
+    public virtual string GetText() => Component.GetText();
     public abstract string ApplyFormat();
 }

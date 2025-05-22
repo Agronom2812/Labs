@@ -10,20 +10,20 @@ public sealed class XmlSerializer : IDocumentSerializer {
     {
         return new XDocument(
             new XElement("Document",
-                new XElement("Title", document.Title),
-                new XElement("Content", document.Content),
-                new XElement("Type", document.GetType().Name)
+                new XElement("Title", document?.Title),
+                new XElement("Content", document?.Content),
+                new XElement("Type", document?.GetType().Name)
             )).ToString();
     }
 
-    public Document? Deserialize(string data)
+    public Document Deserialize(string data)
     {
         var doc = XDocument.Parse(data);
-        return doc.Root.Element("Type").Value switch
+        return doc.Root?.Element("Type")?.Value switch
         {
             nameof(PlainTextDocument) => new PlainTextDocument {
-                Title = doc.Root.Element("Title").Value,
-                Content = doc.Root.Element("Content").Value
+                Title = doc.Root.Element("Title")?.Value,
+                Content = doc.Root.Element("Content")?.Value
             },
             _ => throw new NotSupportedException("Document type not supported")
         };
