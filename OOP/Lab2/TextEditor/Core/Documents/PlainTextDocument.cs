@@ -6,19 +6,20 @@ public sealed class PlainTextDocument : Document {
     {
         Console.WriteLine($"=== {Title} (Plain Text) ===");
         Console.WriteLine(Content);
-        Console.WriteLine($"=== Length: {Content.Length} chars ===");
+        if (Content != null) Console.WriteLine($"=== Length: {Content.Length} chars ===");
     }
 
     public override void InsertText(string? text, int position)
     {
+        Console.WriteLine($"Вставляем текст: '{text}' на позицию {position}");
         base.InsertText(text, position);
-        Console.WriteLine($"Inserted {text.Length} chars at position {position}");
+        Console.WriteLine($"Текст успешно вставлен. Текущее содержимое:\n{Content}");
     }
 
     public override void DeleteText(int start, int length)
     {
+        Console.WriteLine($"Удаляем {length} символов с позиции {start}");
         base.DeleteText(start, length);
-        Console.WriteLine($"Deleted {length} chars from position {start}");
+        Console.WriteLine($"Текст успешно удален. Текущее содержимое:\n{Content}");
     }
-
 }

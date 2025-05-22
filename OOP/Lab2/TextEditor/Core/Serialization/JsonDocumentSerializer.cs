@@ -6,7 +6,7 @@ namespace TextEditor.Core.Serialization;
 public sealed class JsonDocumentSerializer : IDocumentSerializer{
     public string FileExtension => ".json";
 
-    public string Serialize(Document document)
+    public string Serialize(Document? document)
     {
         return JsonSerializer.Serialize(new {
             document.Title,
@@ -15,7 +15,7 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer{
         });
     }
 
-    public Document Deserialize(string data)
+    public Document? Deserialize(string data)
     {
         var json = JsonDocument.Parse(data).RootElement;
         return json.GetProperty("Type").GetString() switch

@@ -2,7 +2,7 @@
 
 namespace TextEditor.Core.Factories;
 
-public class SerializerFactory {
+public static class SerializerFactory {
     public static IDocumentSerializer GetSerializer(string filePath)
     {
         return Path.GetExtension(filePath).ToLower() switch

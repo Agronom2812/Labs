@@ -6,7 +6,7 @@ namespace TextEditor.Core.Serialization;
 public sealed class XmlSerializer : IDocumentSerializer {
     public string FileExtension => ".xml";
 
-    public string Serialize(Document document)
+    public string Serialize(Document? document)
     {
         return new XDocument(
             new XElement("Document",
@@ -16,7 +16,7 @@ public sealed class XmlSerializer : IDocumentSerializer {
             )).ToString();
     }
 
-    public Document Deserialize(string data)
+    public Document? Deserialize(string data)
     {
         var doc = XDocument.Parse(data);
         return doc.Root.Element("Type").Value switch
