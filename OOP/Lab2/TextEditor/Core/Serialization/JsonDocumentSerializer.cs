@@ -1,9 +1,18 @@
 ﻿using System.Text.Json;
 using TextEditor.Core.Documents;
+using TextEditor.Core.Notifications;
 
 namespace TextEditor.Core.Serialization;
 
-public sealed class JsonDocumentSerializer : IDocumentSerializer{
+public sealed class JsonDocumentSerializer : IDocumentSerializer
+{
+    private readonly INotificationService _notificationService;
+
+    public JsonDocumentSerializer(INotificationService notificationService)
+    {
+        _notificationService = notificationService;
+    }
+
     public string FileExtension => ".json";
 
     public string Serialize(Document? document)
@@ -20,7 +29,11 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer{
         var json = JsonDocument.Parse(data).RootElement;
         return json.GetProperty("Type").GetString() switch
         {
-            nameof(PlainTextDocument) => new PlainTextDocument {
+            nameof(PlainTextDocument) => new PlainTextDocument(_notificationService) {
+                Title = json.GetProperty("Title").GetString(),
+                Content = json.GetProperty("Content").GetString()
+            },
+            nameof(MarkdownDocument) => new MarkdownDocument(_notificationService) {
                 Title = json.GetProperty("Title").GetString(),
                 Content = json.GetProperty("Content").GetString()
             },

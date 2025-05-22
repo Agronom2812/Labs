@@ -1,9 +1,18 @@
 ﻿using TextEditor.Core.Factories;
+using TextEditor.Core.Notifications;
+using TextEditor.Core.Users;
 using TextEditor.Services;
 
 namespace TextEditor.Core.Documents;
 
 public abstract class Document {
+
+    private readonly INotificationService _notificationService;
+
+    protected Document(INotificationService notificationService)
+    {
+        _notificationService = notificationService;
+    }
     public string? Title { get; set; } = "Новый документ";
     public string? Content { get; set; } = string.Empty;
 
@@ -36,33 +45,44 @@ public abstract class Document {
     }
 
 
-    public virtual void InsertText(string? text, int position) {
+    public virtual void InsertText(string? text, int position)
+    {
         ArgumentNullException.ThrowIfNull(text);
 
         if (Content != null && (position < 0 || position > Content.Length))
-            throw new ArgumentOutOfRangeException(nameof(position), "Position is out of range");
+            throw new ArgumentOutOfRangeException(nameof(position));
 
         Content = Content?.Insert(position, text);
+        _notificationService.Notify(this, $"Добавлен текст: '{text}' на позицию {position}");
     }
 
     public virtual void DeleteText(int start, int length)
     {
         if (Content != null && (start < 0 || start >= Content.Length))
-            throw new ArgumentOutOfRangeException(nameof(start), "Start position is invalid");
+            throw new ArgumentOutOfRangeException(nameof(start));
 
         if (Content != null && (length < 0 || start + length > Content.Length))
-            throw new ArgumentOutOfRangeException(nameof(length), "Invalid length");
+            throw new ArgumentOutOfRangeException(nameof(length));
 
+        string deletedText = Content?.Substring(start, length) ?? string.Empty;
         Content = Content?.Remove(start, length);
+        _notificationService.Notify(this,
+            $"Удален текст: '{deletedText}' (позиция {start}, длина {length})");
     }
 
-    public void Save(string filePath)
+    public void Save(string filePath, INotificationService notificationService)
     {
-        var serializer = SerializerFactory.GetSerializer(filePath);
+        var serializer = SerializerFactory.GetSerializer(filePath, notificationService);
         File.WriteAllText(
             EnsureExtension(filePath, serializer.FileExtension),
             serializer.Serialize(this)
         );
+    }
+
+    public static Document? Load(string filePath, INotificationService notificationService)
+    {
+        var serializer = SerializerFactory.GetSerializer(filePath, notificationService);
+        return serializer.Deserialize(File.ReadAllText(filePath));
     }
 
     public abstract void Display();

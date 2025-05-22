@@ -1,7 +1,12 @@
-﻿namespace TextEditor.Core.Documents;
+﻿using TextEditor.Core.Notifications;
+
+namespace TextEditor.Core.Documents;
 
 public sealed class MarkdownDocument : Document
 {
+    public MarkdownDocument(INotificationService notificationService)
+        : base(notificationService) { }
+
     private static readonly char[] s_separator = ['\n', '\r'];
 
     public override void Display()

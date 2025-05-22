@@ -1,6 +1,11 @@
-﻿namespace TextEditor.Core.Documents;
+﻿using TextEditor.Core.Notifications;
 
-public sealed class PlainTextDocument : Document {
+namespace TextEditor.Core.Documents;
+
+public sealed class PlainTextDocument : Document
+{
+    public PlainTextDocument(INotificationService notificationService)
+        : base(notificationService) { }
 
     public override void Display()
     {

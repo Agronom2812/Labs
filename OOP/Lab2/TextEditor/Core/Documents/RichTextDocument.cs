@@ -1,8 +1,12 @@
-﻿namespace TextEditor.Core.Documents;
+﻿using TextEditor.Core.Notifications;
 
-    public sealed class RichTextDocument : Document
-    {
-        private List<TextFormat> Formats { get; } = new();
+namespace TextEditor.Core.Documents;
+
+public sealed class RichTextDocument : Document
+{
+    public RichTextDocument(INotificationService notificationService)
+        : base(notificationService) { }
+        private List<TextFormat> Formats { get; } = [];
 
         public override void Display()
         {
