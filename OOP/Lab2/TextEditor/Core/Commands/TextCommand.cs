@@ -1,4 +1,4 @@
-﻿using TextEditor.Core.Documents;
+using TextEditor.Core.Documents;
 
 namespace TextEditor.Core.Commands;
 

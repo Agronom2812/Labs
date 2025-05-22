@@ -2,10 +2,8 @@
 
 namespace TextEditor.Core.Storage;
 
-public interface IStorageStrategy
-{
+public interface IStorageStrategy {
     void Save(Document document, string path);
     Document? Load(string path);
     void Delete(string path);
-    bool Exists(string path);
 }

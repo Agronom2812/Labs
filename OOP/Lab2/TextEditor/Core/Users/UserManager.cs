@@ -2,13 +2,11 @@
 
 namespace TextEditor.Core.Users;
 
-public sealed class UserManager
-{
+public sealed class UserManager {
     private const string UsersFile = "users.json";
-    private List<User> _users = new();
+    private List<User> _users = [];
 
-    public UserManager()
-    {
+    public UserManager() {
         LoadUsers();
 
         if (_users.Any(u => u.Role == UserRole.Admin)) return;
@@ -17,20 +15,18 @@ public sealed class UserManager
         SaveUsers();
     }
 
-    public User? CurrentUser { get; set; }
+    public User? CurrentUser { get; private set; }
 
     public bool IsLoggedIn => CurrentUser != null;
 
-    public bool Login(string name)
-    {
+    public bool Login(string name) {
         CurrentUser = _users.FirstOrDefault(u => u.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         return CurrentUser != null;
     }
 
     public void Logout() => CurrentUser = null;
 
-    public void AddUser(string name, UserRole role)
-    {
+    public void AddUser(string name, UserRole role) {
         if (_users.Any(u => u.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("User already exists");
 
@@ -38,8 +34,7 @@ public sealed class UserManager
         SaveUsers();
     }
 
-    public void ChangeUserRole(string name, UserRole newRole)
-    {
+    public void ChangeUserRole(string name, UserRole newRole) {
         var user = _users.FirstOrDefault(u => u.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
                    ?? throw new InvalidOperationException("User not found");
 
@@ -49,23 +44,19 @@ public sealed class UserManager
 
     public IEnumerable<User> GetAllUsers() => _users.AsReadOnly();
 
-    private void LoadUsers()
-    {
+    private void LoadUsers() {
         if (!File.Exists(UsersFile)) return;
 
-        try
-        {
+        try {
             string json = File.ReadAllText(UsersFile);
-            _users = JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
+            _users = JsonSerializer.Deserialize<List<User>>(json) ?? [];
         }
-        catch
-        {
-            _users = new List<User>();
+        catch {
+            _users = [];
         }
     }
 
-    private void SaveUsers()
-    {
+    private void SaveUsers() {
         string json = JsonSerializer.Serialize(_users);
         File.WriteAllText(UsersFile, json);
     }

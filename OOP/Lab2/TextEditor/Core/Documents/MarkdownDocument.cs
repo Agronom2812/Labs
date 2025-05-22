@@ -2,76 +2,60 @@
 
 namespace TextEditor.Core.Documents;
 
-public sealed class MarkdownDocument : Document
-{
-    public MarkdownDocument(INotificationService notificationService)
-        : base(notificationService) { }
-
+public sealed class MarkdownDocument(INotificationService notificationService) : Document(notificationService) {
     private static readonly char[] s_separator = ['\n', '\r'];
 
-    public override void Display()
-    {
-        if (string.IsNullOrEmpty(Content))
-        {
+    public override void Display() {
+        if (string.IsNullOrEmpty(Content)) {
             Console.WriteLine("--- Документ пуст ---");
             return;
         }
 
         Console.WriteLine($"--- {Title} (Markdown) ---");
 
-        try
-        {
+        try {
             string[] lines = Content.Split(s_separator, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
-            {
+            foreach (string line in lines) {
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
-                if (line.StartsWith("# "))
-                {
+                if (line.StartsWith("# ")) {
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     Console.WriteLine($"Заголовок: {line.Substring(2)}");
                     Console.ResetColor();
                 }
-                else if (line.StartsWith("**") && line.EndsWith("**"))
-                {
+                else if (line.StartsWith("**") && line.EndsWith("**")) {
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine($"Жирный: {line.Substring(2, line.Length - 4)}");
                     Console.ResetColor();
                 }
-                else if (line.StartsWith('*') && line.EndsWith('*') && line.Length > 1)
-                {
+                else if (line.StartsWith('*') && line.EndsWith('*') && line.Length > 1) {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine($"Курсив: {line.Substring(1, line.Length - 2)}");
                     Console.ResetColor();
                 }
-                else
-                {
+                else {
                     Console.WriteLine(line);
                 }
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Console.WriteLine($"Ошибка отображения: {ex.Message}");
             Console.WriteLine("Исходное содержимое:");
             Console.WriteLine(Content);
         }
     }
 
-    public override void InsertText(string? text, int position)
-    {
+    public override void InsertText(string? text, int position) {
         ArgumentNullException.ThrowIfNull(text);
 
         base.InsertText(text, position);
         Console.WriteLine($"Добавлен markdown-текст: {text}");
     }
 
-    public override void DeleteText(int start, int length)
-    {
+    public override void DeleteText(int start, int length) {
         string? deletedPart = Content?.Substring(start, length);
         if (deletedPart != null && (deletedPart.Contains('#')
-                                    || deletedPart.Contains('*') || deletedPart.Contains('_')))
-        {
+                                    || deletedPart.Contains('*') || deletedPart.Contains('_'))) {
             Console.WriteLine("Предупреждение: удаление markdown-разметки может нарушить форматирование!");
         }
 

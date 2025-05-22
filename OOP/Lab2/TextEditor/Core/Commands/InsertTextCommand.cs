@@ -1,8 +1,8 @@
-﻿using TextEditor.Core.Documents;
+using TextEditor.Core.Documents;
 
 namespace TextEditor.Core.Commands;
 
-public sealed class InsertTextCommand(Document document, string text, int position) : TextCommand(document) {
+internal sealed class InsertTextCommand(Document document, string text, int position) : TextCommand(document) {
     public override void Execute()
     {
         Document.InsertText(text, position);
