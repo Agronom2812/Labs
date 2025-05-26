@@ -1,11 +1,17 @@
 ﻿using TextEditor.Core.Notifications;
 using TextEditor.Core.Services;
+using TextEditor.Core.Users;
 
 namespace TextEditor.Core.Documents;
 
 public abstract class Document(INotificationService notificationService) {
     public string? Title { get; set; } = "Новый документ";
     public string? Content { get; set; } = string.Empty;
+    public DocumentPermissions? Permissions { get; private set; }
+
+    public void InitializePermissions(User owner) {
+        Permissions = new DocumentPermissions(owner);
+    }
 
     public void Copy(int start, int length) {
         if (Content != null && (start < 0 || start >= Content.Length))

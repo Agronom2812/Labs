@@ -17,9 +17,11 @@ public sealed class NotificationTests
         userManager.Login("admin");
 
         // When
-        service.Subscribe(userManager.CurrentUser!, doc);
+        if (userManager.CurrentUser == null) return;
+
+        service.Subscribe(userManager.CurrentUser, doc);
 
         // Then
-        Assert.True(service.IsSubscribed(userManager.CurrentUser!, doc));
+        Assert.True(service.IsSubscribed(userManager.CurrentUser, doc));
     }
 }

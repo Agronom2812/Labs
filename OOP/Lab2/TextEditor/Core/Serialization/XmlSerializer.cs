@@ -5,8 +5,6 @@ using TextEditor.Core.Notifications;
 namespace TextEditor.Core.Serialization;
 
 public sealed class XmlSerializer(INotificationService notificationService) : IDocumentSerializer {
-    public string FileExtension => ".xml";
-
     public string Serialize(Document? document) {
         return new XDocument(
             new XElement("Document",

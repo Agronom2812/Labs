@@ -4,60 +4,74 @@ namespace TextEditor.Core.Users;
 
 public sealed class UserManager {
     private const string UsersFile = "users.json";
-    private List<User> _users = [];
+    private readonly List<User> _users;
 
     public UserManager() {
-        LoadUsers();
-
-        if (_users.Any(u => u.Role == UserRole.Admin)) return;
-
-        _users.Add(new User("admin", UserRole.Admin));
-        SaveUsers();
+        _users = LoadUsersSafe();
+        EnsureAdminExists();
     }
 
     public User? CurrentUser { get; private set; }
 
     public bool IsLoggedIn => CurrentUser != null;
 
-    public bool Login(string name) {
-        CurrentUser = _users.FirstOrDefault(u => u.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        return CurrentUser != null;
+    public void Login(string name) {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        CurrentUser = _users.Find(u =>
+            string.Equals(u.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 
     public void Logout() => CurrentUser = null;
 
-    public void AddUser(string name, UserRole role) {
-        if (_users.Any(u => u.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
-            throw new InvalidOperationException("User already exists");
-
-        _users.Add(new User(name, role));
-        SaveUsers();
+    public bool Exists(string name) {
+        return !string.IsNullOrWhiteSpace(name) &&
+               _users.Exists(u =>
+                   string.Equals(u.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 
-    public void ChangeUserRole(string name, UserRole newRole) {
-        var user = _users.FirstOrDefault(u => u.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
-                   ?? throw new InvalidOperationException("User not found");
+    public void AddUser(string name) {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Имя пользователя не может быть пустым");
 
-        user.Role = newRole;
-        SaveUsers();
+        name = name.Trim();
+        if (Exists(name))
+            throw new InvalidOperationException("Пользователь уже существует");
+
+        _users.Add(new User(name));
+        SaveUsersSafe();
     }
 
     public IEnumerable<User> GetAllUsers() => _users.AsReadOnly();
 
-    private void LoadUsers() {
-        if (!File.Exists(UsersFile)) return;
-
+    private static List<User> LoadUsersSafe() {
         try {
+            if (!File.Exists(UsersFile))
+                return [];
+
             string json = File.ReadAllText(UsersFile);
-            _users = JsonSerializer.Deserialize<List<User>>(json) ?? [];
+            return JsonSerializer.Deserialize<List<User>>(json) ?? [];
         }
         catch {
-            _users = [];
+            return [];
         }
     }
 
-    private void SaveUsers() {
-        string json = JsonSerializer.Serialize(_users);
-        File.WriteAllText(UsersFile, json);
+    private void SaveUsersSafe() {
+        try {
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string json = JsonSerializer.Serialize(_users, options);
+            File.WriteAllText(UsersFile, json);
+        }
+        catch (Exception ex) {
+            Console.WriteLine($"Ошибка сохранения пользователей: {ex.Message}");
+        }
+    }
+
+    private void EnsureAdminExists() {
+        if (_users.Any(u => u.Name.Equals("admin", StringComparison.OrdinalIgnoreCase))) return;
+
+        _users.Add(new User("admin"));
+        SaveUsersSafe();
     }
 }

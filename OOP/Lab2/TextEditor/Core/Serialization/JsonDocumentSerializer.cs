@@ -5,8 +5,6 @@ using TextEditor.Core.Notifications;
 namespace TextEditor.Core.Serialization;
 
 public sealed class JsonDocumentSerializer(INotificationService notificationService) : IDocumentSerializer {
-    public string FileExtension => ".json";
-
     public string Serialize(Document? document) {
         return JsonSerializer.Serialize(new { document?.Title, document?.Content, Type = document?.GetType().Name });
     }

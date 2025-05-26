@@ -3,7 +3,7 @@
 namespace TextEditor.Core.Documents;
 
 public sealed class RichTextDocument(INotificationService notificationService) : Document(notificationService) {
-    private List<TextFormat> Formats { get; } = [];
+    public List<TextFormat> Formats { get; } = [];
 
     public override void Display() {
         Console.WriteLine($"=== {Title} (Rich Text) ===");

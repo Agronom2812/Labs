@@ -8,8 +8,7 @@ public abstract class TextCommand(Document document) : ICommand {
 
     public abstract void Execute();
 
-    public virtual void Undo()
-    {
+    public virtual void Undo() {
         Document.Content = _previousContent;
     }
 }

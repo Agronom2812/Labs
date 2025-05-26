@@ -22,6 +22,17 @@ public sealed class NotificationService : INotificationService {
         return _documentSubscriptions.ContainsKey(document) && _documentSubscriptions[document].Contains(user);
     }
 
+    public List<DocumentNotification> GetUserNotifications(User user)
+    {
+        return _notificationHistory
+            .Where(n => n.User == user || _documentSubscriptions
+                .Where(kv => kv.Value.Contains(user))
+                .Select(kv => kv.Key)
+                .Contains(n.Document))
+            .OrderByDescending(n => n.Timestamp)
+            .ToList();
+    }
+
     public void Subscribe(User user, Document? document) {
         if (!_documentSubscriptions.TryGetValue(document, out List<User>? value)) {
             value = [];
@@ -41,7 +52,11 @@ public sealed class NotificationService : INotificationService {
         SaveNotificationHistory();
     }
 
-    public void Notify(Document? document, string message) {
+    public void Notify(Document document, string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            throw new ArgumentException("Message cannot be null or empty");
+
         if (!_documentSubscriptions.TryGetValue(document, out List<User>? value)) return;
 
         if (_userManager.CurrentUser == null)
