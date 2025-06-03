@@ -8,7 +8,7 @@ namespace ConsolePaint.Commands
         private readonly List<IShape> _newShapes;
         private readonly List<IShape> _oldShapes = [];
 
-        public ReplaceAllCommand(List<IShape> target, List<IShape> newShapes)
+        public ReplaceAllCommand(List<IShape> target, List<IShape?> newShapes)
         {
             _target = target;
             _newShapes = newShapes;

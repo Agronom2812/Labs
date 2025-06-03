@@ -1,85 +1,55 @@
 ﻿using SkiaSharp;
 
-namespace ConsolePaint.Shapes
+namespace ConsolePaint.Shapes;
+
+public sealed class Circle : Shape
 {
-    /// <summary>
-    /// Represents a circle shape with specified radius.
-    /// </summary>
-    public sealed class Circle : Shape
+    public float Radius { get; set; }
+
+    public Circle(SKPoint center, float radius)
     {
-        /// <summary>
-        /// Gets or sets the radius of the circle.
-        /// </summary>
-        public float Radius { get; set; }
+        if (radius <= 0)
+            throw new ArgumentException("Radius must be positive", nameof(radius));
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Circle"/> class.
-        /// </summary>
-        /// <param name="center">The center point of the circle.</param>
-        /// <param name="radius">The radius of the circle (must be positive).</param>
-        /// <exception cref="ArgumentException">
-        /// Thrown when radius is non-positive.
-        /// </exception>
-        public Circle(SKPoint center, float radius) : base()
+        Center = center;
+        Radius = radius;
+    }
+
+    public override bool Contains(SKPoint point)
+    {
+        float dx = point.X - Center.X;
+        float dy = point.Y - Center.Y;
+        return dx * dx + dy * dy <= Radius * Radius;
+    }
+
+    public override SKRect GetBounds()
+    {
+        return SKRect.Create(
+            x: Center.X - Radius,
+            y: Center.Y - Radius,
+            width: 2 * Radius,
+            height: 2 * Radius);
+    }
+
+    public override SKPath GetPath()
+    {
+        var path = new SKPath();
+        path.AddCircle(
+            x: Center.X,
+            y: Center.Y,
+            radius: Radius,
+            dir: SKPathDirection.Clockwise);
+        return path;
+    }
+
+    public override Dictionary<string, object> GetGeometry()
+    {
+        return new Dictionary<string, object>
         {
-            if (radius <= 0)
-                throw new ArgumentException("Radius must be a positive number");
-
-            Center = center;
-            Radius = radius;
-
-            Background = new SKColor(255, 0, 0, 100);
-            BorderColor = SKColors.Black;
-            BorderWidth = 2;
-        }
-
-        /// <summary>
-        /// Draws the circle on the specified canvas.
-        /// </summary>
-        /// <param name="canvas">The SkiaSharp canvas to draw on.</param>
-        public override void Draw(SKCanvas canvas)
-        {
-            using (var fillPaint = new SKPaint())
-            {
-                fillPaint.Color = Background;
-                fillPaint.Style = SKPaintStyle.Fill;
-                canvas.DrawCircle(Center, Radius, fillPaint);
-            }
-
-            using (var borderPaint = new SKPaint())
-            {
-                borderPaint.Color = BorderColor;
-                borderPaint.Style = SKPaintStyle.Stroke;
-                borderPaint.StrokeWidth = BorderWidth;
-                canvas.DrawCircle(Center, Radius, borderPaint);
-            }
-
-            if (IsSelected)
-            {
-                using var selectionPaint = new SKPaint
-                {
-                    Color = SKColors.Blue,
-                    Style = SKPaintStyle.Stroke,
-                    StrokeWidth = 2,
-                    PathEffect = SKPathEffect.CreateDash([5, 5], 0),
-                    IsAntialias = true
-                };
-                canvas.DrawCircle(Center, Radius + 5, selectionPaint);
-            }
-
-        }
-
-        /// <summary>
-        /// Checks if a point is contained within the circle.
-        /// </summary>
-        /// <param name="point">The point to check.</param>
-        /// <returns>
-        /// <c>true</c> if the point is inside the circle.
-        /// <c>false</c> if the point is not inside the circle.
-        /// </returns>
-        public override bool Contains(SKPoint point)
-        {
-            return Math.Pow(point.X - Center.X, 2) + Math.Pow(point.Y - Center.Y, 2) <= Math.Pow(Radius, 2);
-        }
+            ["Type"] = "Circle",
+            ["CenterX"] = Center.X,
+            ["CenterY"] = Center.Y,
+            ["Radius"] = Radius
+        };
     }
 }
